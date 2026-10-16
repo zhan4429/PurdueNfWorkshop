@@ -1,0 +1,21 @@
+title: Nextflow on Purdue HPC
+description: A hands-on guide from a Bash loop to a reproducible Nextflow workflow.
+url: https://zhan4429.github.io
+baseurl: /PurdueNfWorkshop
+repository_url: https://github.com/zhan4429/PurdueNfWorkshop
+source_branch: main
+markdown: kramdown
+highlighter: rouge
+kramdown:
+  input: GFM
+  syntax_highlighter: rouge
+exclude:
+  - README.md
+  - MATERIALS_REVIEW.md
+  - PAGES.md
+  - Gemfile
+  - Gemfile.lock
+  - vendor
+  - fastq
+  - work
+  - results
