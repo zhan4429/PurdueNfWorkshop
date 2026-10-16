@@ -43,7 +43,7 @@ cd "$RCAC_SCRATCH/nextflow_workflow"
 bash setup.sh
 ```
 
-**Working directory:** `$RCAC_SCRATCH/nextflow_workflow` contains the scripts. **Input directory:** `$RCAC_SCRATCH/nextflow_workshop/fastq` contains the downloaded FASTQ files. These are two separate directories. In `main.nf`, `../nextflow_workshop/fastq` points to that input directory from the working directory.
+**Working directory:** `$RCAC_SCRATCH/nextflow_workflow` contains the scripts. **Input directory:** `$RCAC_SCRATCH/nextflow_workshop/fastq` contains the downloaded FASTQ files. These are two separate directories. In `main.nf`, `System.getenv('RCAC_SCRATCH')` reads the scratch directory set by Purdue HPC.
 
 If you already have the repository, enter it and run `bash setup.sh`. The script keeps valid existing files and stops if a download or compressed-file check fails.
 
