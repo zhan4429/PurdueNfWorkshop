@@ -179,7 +179,7 @@ ls results/slurm/multiqc/multiqc_report.html
 du -sh work results
 ```
 
-Check that the reports describe the expected input files. A completed scheduler job is the starting point for checking your results.
+Check that the reports describe the expected input files. A job that finished without errors still needs its reports checked.
 
 ## Resume and troubleshoot
 

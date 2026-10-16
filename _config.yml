@@ -13,9 +13,6 @@ exclude:
   - README.md
   - MATERIALS_REVIEW.md
   - PAGES.md
-  - Gemfile
-  - Gemfile.lock
   - vendor
-  - fastq
   - work
   - results
