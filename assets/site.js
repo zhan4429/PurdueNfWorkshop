@@ -1,5 +1,7 @@
 (() => {
   'use strict';
+  const printButton = document.querySelector('.print-button');
+  if (printButton) printButton.addEventListener('click', () => window.print());
   const article = document.getElementById('workshop-content');
   const navigation = document.getElementById('chapter-nav');
   const sidebar = document.querySelector('.sidebar-inner');

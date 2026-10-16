@@ -20,5 +20,10 @@ Commit and push to `main`; GitHub Pages rebuilds the site. The publish source
 is **main / (root)** in the repository's **Settings → Pages**. The workshop site
 is at https://zhan4429.github.io/PurdueNfWorkshop/.
 
-The HTML and PDF field guides remain available as printable companions.
-Website text is edited in `index.md`; printable guides are separate artifacts.
+The [printable field guide](https://zhan4429.github.io/PurdueNfWorkshop/field-guide.html)
+renders `index.md` and its script includes directly. There is no separate lesson
+copy or committed PDF to keep updated. Edit `index.md` or a source script once;
+both views update on the next Pages build. Students can use **Print / Save as PDF**
+for an offline copy. Page count depends on the current lesson and print settings.
+
+`field-guide.html` provides the print view; print styles are in `assets/site.css`.

@@ -1,0 +1,10 @@
+---
+layout: guide
+lesson: nextflow
+title: Nextflow fundamentals
+subtitle: Printable workshop guide · Print or save as PDF from your browser.
+print_view: true
+---
+{% capture lesson %}{% include_relative index.md %}{% endcapture %}
+{% assign lesson_body = lesson | split: '---' | shift | shift | join: '---' %}
+{{ lesson_body | markdownify }}

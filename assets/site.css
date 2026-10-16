@@ -64,6 +64,14 @@ a:focus-visible,button:focus-visible,pre:focus-visible,.table-scroll:focus-visib
 }
 h1 { margin:0; font:400 42px/1.15 var(--serif); letter-spacing:-.4px }
 .page-heading p { margin:8px 0 0; font-size:19px; color:var(--muted) }
+.page-actions { display:flex; align-items:center; flex-wrap:wrap; gap:16px; font-size:16px }
+.page-actions a { text-decoration:none }
+.print-button { padding:8px 14px; background:var(--ink); color:white; border:0; border-radius:4px; font-size:16px; cursor:pointer }
+.print-button:hover { background:var(--green) }
+.print-view .page-heading { flex-direction:column; align-items:flex-start; gap:12px }
+.print-view .sidebar,.print-view .expand-button { display:none }
+.print-view .guide-layout { display:block }
+.print-view .guide-content pre { max-height:none }
 .edit-link { flex:none; font-size:16px; text-decoration:none }
 .guide-layout {
   display:grid;
@@ -195,8 +203,12 @@ h1 { margin:0; font:400 42px/1.15 var(--serif); letter-spacing:-.4px }
   *,*::before,*::after { transition:none!important }
 }
 @media print {
+  @page { size:letter; margin:0.65in }
+  .table-scroll,.highlighter-rouge,.guide-content pre { overflow:visible }
+  thead { display:table-header-group }
+  tr { break-inside:avoid }
   body { background:white; font-size:11pt }
-  .site-header,.reading-progress,.sidebar,.edit-link,.site-footer,.toast,.code-toolbar { display:none }
+  .skip-link,.site-header,.reading-progress,.sidebar,.page-actions,.site-footer,.toast,.code-toolbar { display:none }
   .page-heading { padding:0 0 20px }
   h1 { font-size:30pt }
   .guide-layout { display:block; padding:0 }

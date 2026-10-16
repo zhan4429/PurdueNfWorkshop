@@ -55,7 +55,9 @@ The outputs are not synchronized paired-end reads.
 Run the examples on compute nodes through `sbatch`. Save important results to
 persistent storage before scratch cleanup.
 
-[Four-page field guide](Nextflow_Purdue_HPC_4page_Flyer_Revised.html)
+[Printable field guide](https://zhan4429.github.io/PurdueNfWorkshop/field-guide.html)
+uses the same lesson and scripts as the website. Choose **Print / Save as PDF**
+to save a current copy.
 
 ## Workshop website
 

@@ -14,7 +14,7 @@
   <link rel="stylesheet" href="{{ '/assets/site.css' | relative_url }}?v={{ asset_version }}">
   <script src="{{ '/assets/site.js' | relative_url }}?v={{ asset_version }}" defer></script>
 </head>
-<body>
+<body{% if page.print_view %} class="print-view"{% endif %}>
   <a class="skip-link" href="#guide">Skip to the guide</a>
   <header class="site-header">
     <a class="brand" href="{{ '/' | relative_url }}" aria-label="Nextflow workshop home">Purdue <span>HPC workshops</span></a>
@@ -31,7 +31,14 @@
         <h1 id="hero-title">{{ page.title }}</h1>
         <p>{{ page.subtitle }}</p>
       </div>
-      <a class="edit-link" href="{{ site.repository_url }}/edit/{{ site.source_branch }}/{{ page.path }}">Edit this guide ↗</a>
+      <div class="page-actions">
+        {% if page.print_view %}
+        <a href="{{ '/' | relative_url }}">Back to the online guide</a>
+        <button class="print-button" type="button">Print / Save as PDF</button>
+        {% else %}
+        <a class="edit-link" href="{{ site.repository_url }}/edit/{{ site.source_branch }}/{{ page.path }}">Edit this guide ↗</a>
+        {% endif %}
+      </div>
     </section>
 
     <div class="guide-layout" id="guide" tabindex="-1">
@@ -41,7 +48,7 @@
           <p class="sidebar-label">IN THIS GUIDE</p>
           <nav id="chapter-nav" aria-label="Sections"><noscript>Scroll down to read the workshop.</noscript></nav>
           {% if page.lesson == 'nextflow' %}
-          <a class="sidebar-download" href="{{ '/output/pdf/Nextflow_Purdue_HPC_Field_Guide.pdf' | relative_url }}">Printable guide ↓</a>
+          <a class="sidebar-download" href="{{ '/field-guide.html' | relative_url }}">Printable guide ↗</a>
           {% endif %}
         </div>
       </aside>
@@ -53,7 +60,7 @@
 
   <footer class="site-footer">
     <span>Purdue HPC workshops</span>
-    <div class="footer-links"><a href="{{ site.repository_url }}">Workshop files ↗</a><a href="#hero-title">Back to top ↑</a></div>
+    <div class="footer-links">{% if page.lesson == 'nextflow' and page.print_view != true %}<a href="{{ '/field-guide.html' | relative_url }}">Printable guide ↗</a>{% endif %}<a href="{{ site.repository_url }}">Workshop files ↗</a><a href="#hero-title">Back to top ↑</a></div>
   </footer>
   <div class="toast" role="status" aria-live="polite" id="copy-status"></div>
 </body>
