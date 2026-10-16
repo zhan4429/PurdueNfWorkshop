@@ -204,6 +204,34 @@ nextflow log
 nextflow log last -f name,status,exit,workdir
 ```
 
+**What does `last` mean?** It selects the most recently launched Nextflow run recorded in this working directory, whether it succeeded or failed. It does not mean the last task or the last successful run. After switching between local and Slurm examples, check `nextflow log` to confirm which run is latest.
+
+`-f` selects the columns: `name` is the task name, `status` is its execution status, `exit` is its exit code (`0` means success), and `workdir` is its task directory.
+
+#### Useful log shortcuts
+
+| Command | What it shows |
+| --- | --- |
+| `nextflow log` | Run history, including run names and session IDs |
+| `nextflow log last` | Task directories for the latest run |
+| `nextflow log RUN_NAME` | Task directories for a specific run from the history |
+| `nextflow log SESSION_ID` | The same lookup using a session ID |
+| `nextflow log -quiet` | Only run names |
+| `nextflow log -l` | Available fields for `-f` |
+| `nextflow log -h` | Help for the log command |
+
+Replace `RUN_NAME` or `SESSION_ID` with a value from `nextflow log`. Add the same `-f name,status,exit,workdir` option to inspect tasks in an older run.
+
+To show only failed tasks in the latest run:
+
+```bash
+nextflow log last -F "status == 'FAILED'" -f name,status,exit,workdir
+```
+
+**Lowercase `-f` chooses fields; uppercase `-F` filters tasks.** A run that failed before any tasks started may have no task records to display; inspect `.nextflow.log` for the error.
+
+Reference: [Nextflow log command](https://docs.seqera.io/nextflow/reference/cli/log).
+
 `-resume` uses the latest run by default. If you've switched between examples, use `-resume RUN_NAME` in the launcher to select an older run listed by `nextflow log`.
 
 ### Follow a failure to its task folder
