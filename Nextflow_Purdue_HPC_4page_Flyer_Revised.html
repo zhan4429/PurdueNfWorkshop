@@ -33,7 +33,7 @@ bash setup.sh</code></pre><p>Already have the repository? Enter that folder and 
     module &#x27;biocontainers:fastp&#x27;
     cpus 2
     memory &#x27;4 GB&#x27;
-    time &#x27;2h&#x27;
+    time &#x27;30m&#x27;
     publishDir &quot;${params.outdir}/fastp&quot;, mode: &#x27;copy&#x27;
 
     input:
@@ -60,17 +60,17 @@ bash setup.sh</code></pre><p>Already have the repository? Enter that folder and 
 <article class="page"><header><div class="brand">Purdue RCAC • HPC • Nextflow fundamentals</div><h1>Run on HPC</h1><p>Always launch the Nextflow manager on a compute node using sbatch.</p></header><main><section><div class="label">08 / environment</div><h2>Load modules directly in each job script</h2><pre><code># Nextflow launchers:
 module load biocontainers nextflow
 # Bash loop:
-module load biocontainers fastp fastqc multiqc</code></pre><p>Each script loads its own modules. The Nextflow processes load the required tool with their <code>module</code> directive. No shared environment helper or settings file is needed.</p><p>Use <code>module avail</code> or <code>module spider</code> to check available tools, and <code>slist</code> to find your allocation.</p></section><section><div class="label">09 / configuration</div><h2>Local by default; Slurm with hpc.config</h2><p><code>main.nf</code> defines the shared FASTQ path and output directory. Each process declares 4 GB of memory and a two-hour task limit. The local launcher uses Nextflow’s default local executor. Set the job’s allocation with its <code>#SBATCH</code> directives.</p><p>The HPC launcher adds <code>hpc.config</code> to submit tasks as separate Slurm jobs:</p><pre><code>process {
+module load biocontainers fastp fastqc multiqc</code></pre><p>Each script loads its own modules. The Nextflow processes load the required tool with their <code>module</code> directive. No shared environment helper or settings file is needed.</p><p>Use <code>module avail</code> or <code>module spider</code> to check available tools, and <code>slist</code> to find your allocation.</p></section><section><div class="label">09 / configuration</div><h2>Local by default; Slurm with hpc.config</h2><p><code>main.nf</code> defines the shared FASTQ path and output directory. Each process declares 4 GB of memory and a 30-minute task limit. The local launcher uses Nextflow’s default local executor. Set the job’s allocation with its <code>#SBATCH</code> directives.</p><p>The HPC launcher adds <code>hpc.config</code> to submit tasks as separate Slurm jobs:</p><pre><code>process {
   executor = &#x27;slurm&#x27;
   queue = &#x27;cpu&#x27;
   cpus = 2
   memory = &#x27;4 GB&#x27;
-  time = &#x27;2h&#x27;
+  time = &#x27;30m&#x27;
   clusterOptions = &#x27;-A YOUR_ACCOUNT&#x27;
 }</code></pre><p>Before running, replace <code>YOUR_ACCOUNT</code> in this config. <code>queue = 'cpu'</code> sets the task partition; change it if needed. These settings configure child jobs independently of the head job’s <code>sbatch</code> options.</p></section><section><div class="label">10 / submit and monitor</div><h2>Submit from $RCAC_SCRATCH/nextflow_workflow</h2><pre><code>sbatch -A YOUR_ACCOUNT -p YOUR_PARTITION qc_forloop.sh
 sbatch -A YOUR_ACCOUNT -p YOUR_PARTITION qc_nextflow_local.sh
 sbatch -A YOUR_ACCOUNT -p YOUR_PARTITION qc_nextflow_hpc.sh
-squeue -u &quot;$USER&quot;</code></pre><p>Replace the submission placeholders and the account placeholder in <code>hpc.config</code>. Run the examples in turn. Do not overlap submissions of the same Nextflow launcher.</p><div class="note">The four-hour head-job limit includes waiting for child jobs. Resubmit the same launcher to resume after an interruption.</div></section></main><footer><span>NEXTFLOW • FROM A LOOP TO A WORKFLOW</span><span>03 / 04</span></footer></article>
+squeue -u &quot;$USER&quot;</code></pre><p>Replace the submission placeholders and the account placeholder in <code>hpc.config</code>. Run the examples in turn. Do not overlap submissions of the same Nextflow launcher.</p><div class="note">The 30-minute head-job limit includes waiting for child jobs. Resubmit the same launcher to resume after an interruption.</div></section></main><footer><span>NEXTFLOW • FROM A LOOP TO A WORKFLOW</span><span>03 / 04</span></footer></article>
 <article class="page"><header><div class="brand">Purdue RCAC • HPC • Nextflow fundamentals</div><h1>Resume. Debug. Preserve.</h1><p>Use the same launcher, input files, configuration, and work tree.</p></header><main><section><div class="label">11 / where files live</div><h2>One working directory, separate result folders</h2><table><tr><th>Location (relative paths start in nextflow_workflow/)</th><th>Contents</th></tr><tr><td><code>$RCAC_SCRATCH/nextflow_workshop/fastq</code></td><td>11 downloaded training inputs</td></tr><tr><td><code>results/{forloop,local,slurm}/</code></td><td>Published fastp, fastqc, and multiqc outputs</td></tr><tr><td><code>.nextflow/cache</code></td><td>Task metadata needed to resume</td></tr><tr><td><code>work/{local,slurm}/</code></td><td>Task scripts, logs, and outputs needed to resume</td></tr></table><p class="small">Final reports: <code>results/&lt;route&gt;/multiqc/multiqc_report.html</code>. This exercise uses Purdue modules; it does not configure Nextflow-managed Apptainer images.</p></section><section><div class="label">12 / resume and inspect</div><h2>Resubmit the same route; retain cache and work</h2><pre><code># From the checkout root; both launchers already include -resume:
 sbatch -A YOUR_ACCOUNT -p YOUR_PARTITION qc_nextflow_hpc.sh
 # After completion, load Nextflow, then:

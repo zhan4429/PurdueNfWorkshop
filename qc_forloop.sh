@@ -4,7 +4,7 @@
 #SBATCH -n 1
 #SBATCH -c 2
 #SBATCH --mem=4G
-#SBATCH -t 04:00:00
+#SBATCH -t 00:30:00
 #SBATCH -o qc_forloop_%j.out
 
 # Supply -A ACCOUNT -p PARTITION to sbatch (see README.md).

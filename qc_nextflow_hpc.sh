@@ -4,7 +4,7 @@
 #SBATCH -n 1
 #SBATCH -c 1
 #SBATCH --mem=4G
-#SBATCH -t 04:00:00
+#SBATCH -t 00:30:00
 #SBATCH -o qc_nextflow_slurm_%j.out
 
 set -euo pipefail

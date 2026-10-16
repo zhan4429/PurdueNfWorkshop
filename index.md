@@ -133,7 +133,7 @@ sbatch -A YOUR_ACCOUNT -p YOUR_PARTITION qc_nextflow_hpc.sh
 squeue -u "$USER"
 ```
 
-Run one Nextflow example at a time. Watch for task jobs in `squeue` when using the Slurm executor. The four-hour head-job limit includes time spent waiting for child jobs; if it expires, resubmit the launcher to resume.
+Run one Nextflow example at a time. Watch for task jobs in `squeue` when using the Slurm executor. The 30-minute head-job limit includes time spent waiting for child jobs; if it expires, resubmit the launcher to resume.
 
 ## Find your results
 

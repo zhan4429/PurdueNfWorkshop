@@ -13,7 +13,7 @@ process FASTP {
     module 'biocontainers:fastp'
     cpus 2
     memory '4 GB'
-    time '2h'
+    time '30m'
     publishDir "${params.outdir}/fastp", mode: 'copy'
 
     input:
@@ -40,7 +40,7 @@ process FASTQC {
     module 'biocontainers:fastqc'
     cpus 2
     memory '4 GB'
-    time '2h'
+    time '30m'
     publishDir "${params.outdir}/fastqc", mode: 'copy'
 
     input:
@@ -62,7 +62,7 @@ process MULTIQC {
     module 'biocontainers:multiqc'
     cpus 1
     memory '4 GB'
-    time '2h'
+    time '30m'
     publishDir "${params.outdir}/multiqc", mode: 'copy'
 
     input:

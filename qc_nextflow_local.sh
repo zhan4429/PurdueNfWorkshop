@@ -4,7 +4,7 @@
 #SBATCH -n 1
 #SBATCH -c 4
 #SBATCH --mem=12G
-#SBATCH -t 04:00:00
+#SBATCH -t 00:30:00
 #SBATCH -o qc_nextflow_local_%j.out
 
 set -euo pipefail
