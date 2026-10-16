@@ -133,6 +133,8 @@ sbatch -A YOUR_ACCOUNT -p YOUR_PARTITION qc_nextflow_hpc.sh
 squeue -u "$USER"
 ```
 
+**First Slurm demonstration:** If the local example has already completed, `-resume` can reuse its tasks, so no new Slurm task jobs may appear. To demonstrate Slurm submission, remove `-resume` from `qc_nextflow_hpc.sh` for that first run. Put it back for later resubmissions. Separate work folders do not isolate the run history or cached tasks.
+
 Run one Nextflow example at a time. Watch for task jobs in `squeue` when using the Slurm executor. The 30-minute head-job limit includes time spent waiting for child jobs; if it expires, resubmit the launcher to resume.
 
 ## Publish outputs with publishDir

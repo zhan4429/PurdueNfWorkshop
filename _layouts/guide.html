@@ -4,7 +4,7 @@
   {% assign asset_version = site.time | date: '%s' %}
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="{{ site.description | escape }}">
+  <meta name="description" content="{{ page.subtitle | default: site.description | escape }}">
   <meta name="theme-color" content="#f8f7f2">
   <title>{{ page.title | default: site.title }} · Purdue HPC</title>
   <link rel="icon" type="image/svg+xml" href="{{ '/assets/favicon.svg' | relative_url }}?v={{ asset_version }}">

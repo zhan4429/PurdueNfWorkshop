@@ -33,6 +33,11 @@ squeue -u "$USER"
 - **Nextflow local:** runs parallel tasks within one compute allocation.
 - **Nextflow HPC:** submits each task as a separate Slurm job.
 
+For the first Slurm demonstration after a completed local run, remove `-resume`
+from `qc_nextflow_hpc.sh` so it submits new tasks instead of reusing the local
+cache. Put it back for later resubmissions. Separate work folders do not isolate
+the run history or cached tasks.
+
 The `sbatch` options configure the job running Nextflow. `hpc.config` configures
 the separate HPC task jobs; its account and partition are set explicitly.
 The local launcher uses Nextflow’s default local executor. Set the job’s
