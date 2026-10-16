@@ -5,12 +5,13 @@ separate build workflow is needed.
 
 ## Everyday edits
 
-- **Lesson text:** edit `index.md`, or use **Edit this guide** on the website.
+- **Nextflow lesson:** edit `index.md`, or use **Edit this guide** on the website.
+- **nf-core lesson:** edit `nf-core.md`. Its placeholder is at `/nf-core/`.
 - **Code examples:** edit the original `.sh`, `.nf`, or `.config` file. The guide
   includes these files directly, so the displayed code updates with them.
 - **Appearance:** edit `assets/site.css`.
 - **Copy buttons and navigation:** edit `assets/site.js`.
-- **Header, hero, and footer:** edit `_layouts/guide.html`.
+- **Header, page title, and footer:** edit `_layouts/guide.html`.
 
 Keep the `{% include_relative ... %}` lines in `index.md`: they display the
 actual workshop scripts. New `##` headings automatically appear in the sidebar.

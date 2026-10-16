@@ -1,5 +1,8 @@
 ---
 layout: guide
+lesson: nextflow
+title: Nextflow fundamentals
+subtitle: From a Bash loop to a reproducible workflow on Purdue HPC.
 ---
 
 ## Start with the big picture
