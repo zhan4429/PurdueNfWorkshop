@@ -135,6 +135,33 @@ squeue -u "$USER"
 
 Run one Nextflow example at a time. Watch for task jobs in `squeue` when using the Slurm executor. The 30-minute head-job limit includes time spent waiting for child jobs; if it expires, resubmit the launcher to resume.
 
+## Publish outputs with publishDir
+
+Tasks produce files in `work/`. `publishDir` exposes declared outputs in a results folder. Our FASTP process uses:
+
+```groovy
+publishDir "${params.outdir}/fastp", mode: 'copy'
+```
+
+With `params.outdir = 'results/local'`, Nextflow creates `results/local/fastp/` automatically when publishing. No `mkdir` is needed. The parameter alone does not create directories.
+
+### Compare publishing modes
+
+| Mode | What appears in results? | Storage and cleanup |
+| --- | --- | --- |
+| `copy` | Independent file copies | Uses extra space; copies survive removal of `work/`. |
+| `symlink` (default) | Absolute symbolic links | Little extra space; links break if their targets are removed or relocated. |
+| `rellink` | Relative symbolic links | Little extra space; moving both folders together preserves links if their relative layout stays unchanged. |
+| `link` | Hard links sharing file data | Requires the same filesystem; files survive removal of the original links. Edits affect both. |
+| `move` | Original files moved out of `work/` | Only for terminal processes; downstream tasks must not need these files. |
+| `copyNoFollow` | Copies that preserve symbolic links | Copies links themselves; their targets must remain available. |
+
+**Why we use `copy`:** workshop reports are easy to download and keep independently of task folders. Retain `work/` and `.nextflow/` for `-resume`.
+
+Publishing is asynchronous. Pass outputs through channels to downstream processes, rather than reading the results folder.
+
+Reference: [Nextflow publishDir documentation](https://docs.seqera.io/nextflow/reference/process/directives/publish-dir).
+
 ## Find your results
 
 Each route writes to its own results folder under the working directory.
