@@ -63,9 +63,6 @@ module load biocontainers nextflow
 module load biocontainers fastp fastqc multiqc</code></pre><p>Each script loads its own modules. The Nextflow processes load the required tool with their <code>module</code> directive. No shared environment helper or settings file is needed.</p><p>Use <code>module avail</code> or <code>module spider</code> to check available tools, and <code>slist</code> to find your allocation.</p></section><section><div class="label">09 / configuration</div><h2>Local by default; Slurm with hpc.config</h2><p><code>main.nf</code> defines the shared FASTQ path and output directory. Each process declares 4 GB of memory and a 30-minute task limit. The local launcher uses Nextflow’s default local executor. Set the job’s allocation with its <code>#SBATCH</code> directives.</p><p>The HPC launcher adds <code>hpc.config</code> to submit tasks as separate Slurm jobs:</p><pre><code>process {
   executor = &#x27;slurm&#x27;
   queue = &#x27;cpu&#x27;
-  cpus = 2
-  memory = &#x27;4 GB&#x27;
-  time = &#x27;30m&#x27;
   clusterOptions = &#x27;-A YOUR_ACCOUNT&#x27;
 }</code></pre><p>Before running, replace <code>YOUR_ACCOUNT</code> in this config. <code>queue = 'cpu'</code> sets the task partition; change it if needed. These settings configure child jobs independently of the head job’s <code>sbatch</code> options.</p></section><section><div class="label">10 / submit and monitor</div><h2>Submit from $RCAC_SCRATCH/nextflow_workflow</h2><pre><code>sbatch -A YOUR_ACCOUNT -p YOUR_PARTITION qc_forloop.sh
 sbatch -A YOUR_ACCOUNT -p YOUR_PARTITION qc_nextflow_local.sh
