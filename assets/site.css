@@ -1115,9 +1115,6 @@ h1 em {
     gap:22px
   }
 
-  .github-link {
-    display:none
-  }
 
   .hero {
     grid-template-columns:1fr 1fr;
@@ -1231,6 +1228,9 @@ h1 em {
 }
 
 @media(max-width:640px) {
+  .top-nav .files-link {
+    display:none;
+  }
   .site-header {
     height:73px;
     padding:0 20px;
