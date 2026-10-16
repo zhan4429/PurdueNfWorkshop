@@ -1,7 +1,6 @@
 #!/bin/bash
 set -euo pipefail
 
-: "${RCAC_SCRATCH:?RCAC_SCRATCH is not set}"
 mkdir -p "$RCAC_SCRATCH/nextflow_workshop/fastq"
 cd "$RCAC_SCRATCH/nextflow_workshop/fastq"
 
