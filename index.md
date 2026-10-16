@@ -96,7 +96,7 @@ The pipeline stays the same. The executor changes where its tasks run.
 
 ### Local: inside one compute allocation
 
-“Local” means inside the compute allocation running Nextflow. It is Nextflow's default executor. The launcher requests eight CPUs and 24 GB through its `#SBATCH` directives.
+“Local” means inside the compute allocation running Nextflow. It is Nextflow's default executor. The launcher requests four CPUs and 12 GB through its `#SBATCH` directives.
 
 [qc_nextflow_local.sh]({{ '/qc_nextflow_local.sh' | relative_url }}) runs directly from the workshop working directory:
 
