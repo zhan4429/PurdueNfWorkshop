@@ -19,8 +19,7 @@ bash setup.sh
 ```
 
 Run the scripts from the repository directory. `setup.sh` downloads FASTQs
-into `data/` there; reports go into `results/`. If you used an earlier version,
-rerun `bash setup.sh` to populate `data/`.
+into `data/` there; reports go into `results/`.
 
 ## Run
 

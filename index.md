@@ -51,9 +51,7 @@ Run all scripts from the repository directory. Files stay under that directory:
 | Published reports | `results/` |
 | Nextflow task files | `work/` |
 
-If you downloaded data with an earlier version, rerun `bash setup.sh` to populate `data/`.
-
-If you already have the repository, enter it and run `bash setup.sh`. The script keeps valid existing files and stops if a download or compressed-file check fails.
+The setup script downloads the FASTQ files and checks that they are valid gzip files. It stops if a download or compressed-file check fails.
 
 ### The setup script
 
