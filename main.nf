@@ -11,7 +11,6 @@ params.outdir = 'results/local'
 process FASTP {
     tag "${reads.simpleName}"
     cpus 2
-    memory '4 GB'
     time '30m'
     publishDir "${params.outdir}/fastp", mode: 'copy'
 
@@ -37,7 +36,6 @@ process FASTP {
 process FASTQC {
     tag "${reads.simpleName}"
     cpus 2
-    memory '4 GB'
     time '30m'
     publishDir "${params.outdir}/fastqc", mode: 'copy'
 
@@ -58,7 +56,6 @@ process FASTQC {
 // Step 3: combine all reports with MultiQC
 process MULTIQC {
     cpus 1
-    memory '4 GB'
     time '30m'
     publishDir "${params.outdir}/multiqc", mode: 'copy'
 

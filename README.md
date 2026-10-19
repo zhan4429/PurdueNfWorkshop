@@ -16,21 +16,22 @@ to avoid XALT/biocontainer conflicts.
 ## Setup
 
 ```bash
-git clone https://github.com/zhan4429/PurdueNfWorkshop.git "$RCAC_SCRATCH/nextflow_workflow"
-cd "$RCAC_SCRATCH/nextflow_workflow"
+git clone https://github.com/zhan4429/PurdueNfWorkshop.git "$RCAC_SCRATCH/PurdueNfWorkshop"
+cd "$RCAC_SCRATCH/PurdueNfWorkshop"
 bash setup.sh
 ```
 
-Scripts run from `$RCAC_SCRATCH/nextflow_workflow`. FASTQ files are stored
-separately in `$RCAC_SCRATCH/nextflow_workshop/fastq`.
+Scripts run from `$RCAC_SCRATCH/PurdueNfWorkshop`. FASTQ files are stored
+separately in `$RCAC_SCRATCH/nextflow_workshop/fastq`. Existing checkouts can
+stay where they are; submit jobs from their repository directory.
 
 ## Run
 
-Submit from `$RCAC_SCRATCH/nextflow_workflow`, which contains the scripts. Replace `YOUR_ACCOUNT` and `YOUR_PARTITION`
+Submit from `$RCAC_SCRATCH/PurdueNfWorkshop`, which contains the scripts. Replace `YOUR_ACCOUNT` and `YOUR_PARTITION`
 with your Slurm allocation and partition. Run `slist` to find your accounts.
-Before the Slurm example, also replace
-`YOUR_ACCOUNT` in `hpc.config`. Its `queue = 'cpu'` selects the task partition;
-change it if needed. Run each example in turn:
+For the Slurm example, `hpc.config` inherits the account from the head job's
+`SLURM_JOB_ACCOUNT`. Its `queue = 'cpu'` selects the task partition; change it
+if needed. Run each example in turn:
 
 ```bash
 sbatch -A YOUR_ACCOUNT -p YOUR_PARTITION qc_forloop.sh
@@ -46,11 +47,15 @@ squeue -u "$USER"
 The local launcher includes `-resume`. The Slurm launcher deliberately omits it
 so the first Slurm demonstration submits new tasks rather than reusing the local
 cache. Separate work folders do not isolate run history or cached tasks.
+The collaborator observed about six minutes for the Slurm route with an empty queue.
 
 The `sbatch` options configure the job running Nextflow. `hpc.config` configures
-the separate HPC task jobs; its account and partition are set explicitly.
+the separate HPC task jobs; their account comes from the head job, and their
+partition is set by `queue`.
 The local launcher uses Nextflow’s default local executor. Set the job’s
-allocation with its `#SBATCH` directives.
+allocation with its `#SBATCH` directives. The launchers request CPUs without
+explicit memory requests; memory follows the partition’s default allocation
+per core. The Slurm head job limits the Nextflow JVM heap to 1 GB.
 
 ## Results and resume
 

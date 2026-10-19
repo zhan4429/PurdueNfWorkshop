@@ -3,7 +3,6 @@
 #SBATCH -N 1
 #SBATCH -n 1
 #SBATCH -c 2
-#SBATCH --mem=4G
 #SBATCH -t 00:30:00
 #SBATCH -o qc_forloop_%j.out
 

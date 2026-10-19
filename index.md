@@ -40,19 +40,19 @@ You'll need HPC access, a Slurm allocation, and the `biocontainers` and `nextflo
 Clone the workshop into scratch:
 
 ```bash
-git clone https://github.com/zhan4429/PurdueNfWorkshop.git "$RCAC_SCRATCH/nextflow_workflow"
-cd "$RCAC_SCRATCH/nextflow_workflow"
+git clone https://github.com/zhan4429/PurdueNfWorkshop.git "$RCAC_SCRATCH/PurdueNfWorkshop"
+cd "$RCAC_SCRATCH/PurdueNfWorkshop"
 bash setup.sh
 ```
 
-The two similarly named directories have different roles:
+The repository and input data use separate directories:
 
 | Role | Directory |
 | --- | --- |
-| Repository: submit jobs from here | `$RCAC_SCRATCH/nextflow_workflow` |
+| Repository: submit jobs from here | `$RCAC_SCRATCH/PurdueNfWorkshop` |
 | Downloaded input data | `$RCAC_SCRATCH/nextflow_workshop/fastq` |
 
-Keep these paths as shown when copying the commands. In `main.nf`, `System.getenv('RCAC_SCRATCH')` reads the scratch directory set by Purdue HPC.
+Use these paths for a new clone. Existing checkouts can stay where they are; submit jobs from the checkout directory. The FASTQ location is unchanged. In `main.nf`, `System.getenv('RCAC_SCRATCH')` reads the scratch directory set by Purdue HPC.
 
 If you already have the repository, enter it and run `bash setup.sh`. The script keeps valid existing files and stops if a download or compressed-file check fails.
 
@@ -70,7 +70,7 @@ This code is included directly from [setup.sh]({{ '/setup.sh' | relative_url }})
 
 The familiar version processes one FASTQ file at a time: trim, check quality, move to the next file, then combine the reports. If the job stops, submitting it again starts from the first file.
 
-[qc_forloop.sh]({{ '/qc_forloop.sh' | relative_url }}) requests two CPUs and 4 GB of memory. It stops on tool failures and overwrites the combined MultiQC report when you run it again.
+[qc_forloop.sh]({{ '/qc_forloop.sh' | relative_url }}) requests two CPUs. It stops on tool failures and overwrites the combined MultiQC report when you run it again.
 
 ```bash
 {% include_relative qc_forloop.sh %}
@@ -128,7 +128,7 @@ The pipeline stays the same. The executor changes where its tasks run.
 
 ### Local: inside one compute allocation
 
-“Local” means inside the compute allocation running Nextflow. It is Nextflow's default executor. The launcher requests four CPUs and 12 GB through its `#SBATCH` directives.
+“Local” means inside the compute allocation running Nextflow. It is Nextflow's default executor. The launcher requests four CPUs through its `#SBATCH` directives.
 
 [qc_nextflow_local.sh]({{ '/qc_nextflow_local.sh' | relative_url }}) runs directly from the workshop working directory:
 
@@ -146,13 +146,13 @@ Here, the head job runs the Nextflow manager. Nextflow submits each fastp, FastQ
 {% include_relative qc_nextflow_slurm.sh %}
 ```
 
-The head job requests two CPUs and 8 GB. Each task gets its CPUs, memory, and time limit from `main.nf`. The executor, partition, and account are set in [hpc.config]({{ '/hpc.config' | relative_url }}):
+The head job requests two CPUs. Each task gets its CPU count and time limit from `main.nf`. The executor, partition, and account are set in [hpc.config]({{ '/hpc.config' | relative_url }}):
 
 ```groovy
 {% include_relative hpc.config %}
 ```
 
-> **Before submitting:** Replace `YOUR_ACCOUNT` in `hpc.config`. Its `queue = 'cpu'` sets the child-job partition; change it if needed. The account and partition passed to `sbatch` configure the **head job** separately.
+> **Before submitting:** Use `slist` to find your account and pass it with `sbatch -A YOUR_ACCOUNT`. Slurm sets `SLURM_JOB_ACCOUNT` in the head job; `hpc.config` reads it so child jobs use the same account. Its `queue = 'cpu'` sets the child-job partition; change it if needed. The `sbatch -p` option sets the head-job partition.
 
 ### Requested and allocated resources
 
@@ -160,11 +160,11 @@ The `#SBATCH` settings describe the launcher job; the process directives in `mai
 
 On the tested [Gautschi CPU partition](https://docs.rcac.purdue.edu/userguides/gautschi/run_jobs/queues/), memory is allocated in proportion to requested cores. An explicit memory request can cause Slurm to allocate additional cores, so the allocated count may exceed `-c`. Check the job's actual allocation with `scontrol show job JOBID`, replacing `JOBID` with the ID from `sbatch`.
 
-The current Slurm launcher requests 8 GB and limits the Nextflow JVM heap to 4 GB with `NXF_OPTS`. If you reduce its memory request, adjust the heap or core request too, allowing room for JVM overhead. Memory policies vary by cluster and partition.
+The launchers omit `--mem`, and the processes omit the `memory` directive. Memory follows the partition’s default allocation per core. The Slurm head job limits the Nextflow JVM heap to 1 GB with `NXF_OPTS`, leaving room for JVM overhead. Check the partition’s memory policy if adapting these examples to another system.
 
 ### Submit the examples
 
-From `$RCAC_SCRATCH/nextflow_workflow`, replace the account and partition placeholders and submit each example in turn:
+From `$RCAC_SCRATCH/PurdueNfWorkshop`, replace the account and partition placeholders and submit each example in turn:
 
 ```bash
 sbatch -A YOUR_ACCOUNT -p YOUR_PARTITION qc_forloop.sh
@@ -246,7 +246,7 @@ Load Nextflow and inspect the run from the working directory:
 ```bash
 module --force purge
 module load nextflow
-cd "$RCAC_SCRATCH/nextflow_workflow"
+cd "$RCAC_SCRATCH/PurdueNfWorkshop"
 nextflow log
 nextflow log last -f name,status,exit,workdir
 ```
@@ -291,7 +291,7 @@ Read the Slurm output file in the working directory and the `.nextflow.log` file
 | `.command.err` | Tool error messages |
 | `.exitcode` | The task's exit status |
 
-For exit code `127` from a QC tool, check that `nextflow.config` is present and its module-load/export commands succeeded. For a missing module, check `module avail` or `module spider`. For rejected Slurm jobs, check your allocation and the account/partition in `hpc.config`. Debug tool commands inside an interactive compute allocation.
+For exit code `127` from a QC tool, check that `nextflow.config` is present and its module-load/export commands succeeded. For a missing module, check `module avail` or `module spider`. For rejected Slurm jobs, check the account passed to `sbatch -A` and the partition in `hpc.config`. Debug tool commands inside an interactive compute allocation.
 
 ### One dash or two?
 
