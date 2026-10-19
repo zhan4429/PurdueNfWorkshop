@@ -1,8 +1,8 @@
 #!/bin/bash
 set -euo pipefail
 
-mkdir -p "$RCAC_SCRATCH/nextflow_workshop/fastq"
-cd "$RCAC_SCRATCH/nextflow_workshop/fastq"
+mkdir -p "$RCAC_SCRATCH/nextflow_data/fastq"
+cd "$RCAC_SCRATCH/nextflow_data/fastq"
 
 # A fixed revision of the nf-core training dataset.
 base_url=https://raw.githubusercontent.com/nf-core/test-datasets/cad884e7fbe5617dcd55bdd07d9ddf65b54febe4/testdata/GSE110004

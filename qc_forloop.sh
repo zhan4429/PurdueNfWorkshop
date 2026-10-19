@@ -12,7 +12,7 @@ set -euo pipefail
 module --force purge
 module load biocontainers fastp fastqc multiqc
 
-FASTQ_DIR="$RCAC_SCRATCH/nextflow_workshop/fastq"
+FASTQ_DIR="$RCAC_SCRATCH/nextflow_data/fastq"
 OUTDIR=results/forloop
 mkdir -p "$OUTDIR/fastp" "$OUTDIR/fastqc" "$OUTDIR/multiqc"
 for fq in "$FASTQ_DIR"/*.fastq.gz; do

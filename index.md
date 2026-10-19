@@ -50,9 +50,9 @@ The repository and input data use separate directories:
 | Role | Directory |
 | --- | --- |
 | Repository: submit jobs from here | `$RCAC_SCRATCH/PurdueNfWorkshop` |
-| Downloaded input data | `$RCAC_SCRATCH/nextflow_workshop/fastq` |
+| Downloaded input data | `$RCAC_SCRATCH/nextflow_data/fastq` |
 
-Use these paths for a new clone. Existing checkouts can stay where they are; submit jobs from the checkout directory. The FASTQ location is unchanged. In `main.nf`, `System.getenv('RCAC_SCRATCH')` reads the scratch directory set by Purdue HPC.
+Use these paths for a new clone. Existing checkouts can stay where they are; submit jobs from the checkout directory. If you downloaded data with an earlier version, rerun `bash setup.sh` to populate the new data folder. In `main.nf`, `System.getenv('RCAC_SCRATCH')` reads the scratch directory set by Purdue HPC.
 
 If you already have the repository, enter it and run `bash setup.sh`. The script keeps valid existing files and stops if a download or compressed-file check fails.
 
