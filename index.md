@@ -114,7 +114,7 @@ Here, the head job runs the Nextflow manager. Nextflow submits each fastp, FastQ
 {% include_relative qc_nextflow_hpc.sh %}
 ```
 
-The head job requests one CPU and 4 GB. Each task gets its CPUs, memory, and time limit from `main.nf`. The executor, partition, and account are set in [hpc.config]({{ '/hpc.config' | relative_url }}):
+The head job requests one CPU and 8 GB. Each task gets its CPUs, memory, and time limit from `main.nf`. The executor, partition, and account are set in [hpc.config]({{ '/hpc.config' | relative_url }}):
 
 ```groovy
 {% include_relative hpc.config %}
