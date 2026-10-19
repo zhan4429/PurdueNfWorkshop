@@ -87,6 +87,15 @@ The same three steps become three processes in [main.nf]({{ '/main.nf' | relativ
 - `publishDir` copies the declared outputs into the results folder.
 - `${task.cpus}` passes the process's CPU count to the tool.
 
+### Which configuration file does what?
+
+| File | Purpose | Used by |
+| --- | --- | --- |
+| `nextflow.config` | Prepare the task environment: purge modules, load the QC tools, and export their Bash functions | Both local and Slurm routes; loaded automatically |
+| `hpc.config` | Select the Slurm executor, task partition, and account | Slurm route only; added with `-c hpc.config` |
+
+Keep both files beside `main.nf`. The local launcher uses `nextflow.config` alone; the Slurm launcher uses both. Input/output parameters and task resources remain in `main.nf`.
+
 ### Make RCAC's tools available to task shells
 
 Each launcher runs `module --force purge` before loading its modules. On the tested cluster, this removes the auto-loaded XALT module whose `LD_PRELOAD` interfered with the biocontainer images.
@@ -96,6 +105,8 @@ RCAC's biocontainer modules provide `fastp`, `fastqc`, and `multiqc` as Bash fun
 ```groovy
 {% include_relative nextflow.config %}
 ```
+
+`module --force purge` removes conflicting modules; `module load` defines the tool functions; `export -f` passes them to the child Bash shell that executes the task. The per-process `module` directives in `main.nf` also request tool modules, but do not replace the function exports.
 
 `process.beforeScript` resets and loads the tool modules, then exports their functions before each task command runs. This setup applies to both executors. Keep `nextflow.config` beside `main.nf`; `-c hpc.config` adds Slurm scheduling settings without replacing it. Without the task setup, the tested runs failed with exit code `127` (command not found).
 
@@ -142,6 +153,14 @@ The head job requests two CPUs and 8 GB. Each task gets its CPUs, memory, and ti
 ```
 
 > **Before submitting:** Replace `YOUR_ACCOUNT` in `hpc.config`. Its `queue = 'cpu'` sets the child-job partition; change it if needed. The account and partition passed to `sbatch` configure the **head job** separately.
+
+### Requested and allocated resources
+
+The `#SBATCH` settings describe the launcher job; the process directives in `main.nf` describe individual tasks. In local mode, those tasks share the launcher's allocation. In Slurm mode, each task receives its own allocation.
+
+On the tested [Gautschi CPU partition](https://docs.rcac.purdue.edu/userguides/gautschi/run_jobs/queues/), memory is allocated in proportion to requested cores. An explicit memory request can cause Slurm to allocate additional cores, so the allocated count may exceed `-c`. Check the job's actual allocation with `scontrol show job JOBID`, replacing `JOBID` with the ID from `sbatch`.
+
+The current Slurm launcher requests 8 GB and limits the Nextflow JVM heap to 4 GB with `NXF_OPTS`. If you reduce its memory request, adjust the heap or core request too, allowing room for JVM overhead. Memory policies vary by cluster and partition.
 
 ### Submit the examples
 

@@ -4,7 +4,9 @@ Compare a Bash loop with a Nextflow workflow: **fastp → FastQC → MultiQC**.
 The scripts use Slurm and the `biocontainers` and `nextflow` modules.
 Input/output parameters and task resources are defined in `main.nf`.
 `nextflow.config` loads and exports RCAC's tool functions for task shells;
-`hpc.config` adds Slurm scheduling settings. Keep these files together.
+`hpc.config` adds Slurm scheduling settings. Nextflow reads `nextflow.config`
+automatically for both routes; only the Slurm launcher adds `-c hpc.config`.
+Keep both configuration files beside `main.nf`.
 
 The module fixes in [PR #1](https://github.com/zhan4429/PurdueNfWorkshop/pull/1)
 were tested on Gautschi by Arun Seetharam: all three routes and local resume
