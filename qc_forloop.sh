@@ -10,6 +10,7 @@
 # Supply -A ACCOUNT -p PARTITION to sbatch (see README.md).
 # One FASTQ at a time in single-end mode. Resubmission starts over.
 set -euo pipefail
+module --force purge
 module load biocontainers fastp fastqc multiqc
 
 FASTQ_DIR="$RCAC_SCRATCH/nextflow_workshop/fastq"

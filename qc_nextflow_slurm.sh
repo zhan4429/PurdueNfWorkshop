@@ -8,6 +8,7 @@
 #SBATCH -o qc_nextflow_slurm_%j.out
 
 set -euo pipefail
+module --force purge
 module load nextflow
 
 # Keep the Nextflow JVM small; the real work happens in child SLURM jobs.
