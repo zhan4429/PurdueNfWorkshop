@@ -108,10 +108,10 @@ The pipeline stays the same. The executor changes where its tasks run.
 
 Here, the head job runs the Nextflow manager. Nextflow submits each fastp, FastQC, and MultiQC task as a separate Slurm job.
 
-[qc_nextflow_hpc.sh]({{ '/qc_nextflow_hpc.sh' | relative_url }}) adds `-c hpc.config`:
+[qc_nextflow_slurm.sh]({{ '/qc_nextflow_slurm.sh' | relative_url }}) adds `-c hpc.config`:
 
 ```bash
-{% include_relative qc_nextflow_hpc.sh %}
+{% include_relative qc_nextflow_slurm.sh %}
 ```
 
 The head job requests one CPU and 8 GB. Each task gets its CPUs, memory, and time limit from `main.nf`. The executor, partition, and account are set in [hpc.config]({{ '/hpc.config' | relative_url }}):
@@ -129,11 +129,11 @@ From `$RCAC_SCRATCH/nextflow_workflow`, replace the account and partition placeh
 ```bash
 sbatch -A YOUR_ACCOUNT -p YOUR_PARTITION qc_forloop.sh
 sbatch -A YOUR_ACCOUNT -p YOUR_PARTITION qc_nextflow_local.sh
-sbatch -A YOUR_ACCOUNT -p YOUR_PARTITION qc_nextflow_hpc.sh
+sbatch -A YOUR_ACCOUNT -p YOUR_PARTITION qc_nextflow_slurm.sh
 squeue -u "$USER"
 ```
 
-**First Slurm demonstration:** If the local example has already completed, `-resume` can reuse its tasks, so no new Slurm task jobs may appear. To demonstrate Slurm submission, remove `-resume` from `qc_nextflow_hpc.sh` for that first run. Put it back for later resubmissions. Separate work folders do not isolate the run history or cached tasks.
+**First Slurm demonstration:** If the local example has already completed, `-resume` can reuse its tasks, so no new Slurm task jobs may appear. To demonstrate Slurm submission, remove `-resume` from `qc_nextflow_slurm.sh` for that first run. Put it back for later resubmissions. Separate work folders do not isolate the run history or cached tasks.
 
 Run one Nextflow example at a time. Watch for task jobs in `squeue` when using the Slurm executor. The 30-minute head-job limit includes time spent waiting for child jobs; if it expires, resubmit the launcher to resume.
 
@@ -190,7 +190,7 @@ Both Nextflow launchers already include `-resume`. To reuse matching completed t
 ```bash
 sbatch -A YOUR_ACCOUNT -p YOUR_PARTITION qc_nextflow_local.sh
 # Or resume the Slurm example:
-sbatch -A YOUR_ACCOUNT -p YOUR_PARTITION qc_nextflow_hpc.sh
+sbatch -A YOUR_ACCOUNT -p YOUR_PARTITION qc_nextflow_slurm.sh
 ```
 
 Keep **both** `.nextflow/` and `work/`. The first stores task metadata; the second holds the task outputs that Nextflow needs to resume. Published reports alone aren't enough. Changed inputs, scripts, or software can invalidate cached tasks.
