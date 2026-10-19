@@ -33,7 +33,9 @@ Nextflow describes this as a **dataflow**: FastQC starts when its trimmed reads 
 
 ## Prepare your workspace
 
-You'll need HPC access, a Slurm allocation, and the `biocontainers` and `nextflow` modules. Submit the examples through `sbatch` so the work runs on compute nodes.
+You'll need HPC access, a Slurm allocation, and the `biocontainers` and `nextflow` modules. Submit the examples through `sbatch` so the work runs on compute nodes. Run `slist` on the cluster to find your available accounts.
+
+> **Cluster-tested setup:** In [PR #1](https://github.com/zhan4429/PurdueNfWorkshop/pull/1), Arun Seetharam reports successful Bash, local, local-resume, and Slurm runs on Gautschi on October 19, 2026. The Slurm run submitted 23 child jobs. Keep the module reset in each launcher and the task setup in `nextflow.config`; both address failures found during those tests.
 
 Clone the workshop into scratch:
 
@@ -43,7 +45,14 @@ cd "$RCAC_SCRATCH/nextflow_workflow"
 bash setup.sh
 ```
 
-**Working directory:** `$RCAC_SCRATCH/nextflow_workflow` contains the scripts. **Input directory:** `$RCAC_SCRATCH/nextflow_workshop/fastq` contains the downloaded FASTQ files. These are two separate directories. In `main.nf`, `System.getenv('RCAC_SCRATCH')` reads the scratch directory set by Purdue HPC.
+The two similarly named directories have different roles:
+
+| Role | Directory |
+| --- | --- |
+| Repository: submit jobs from here | `$RCAC_SCRATCH/nextflow_workflow` |
+| Downloaded input data | `$RCAC_SCRATCH/nextflow_workshop/fastq` |
+
+Keep these paths as shown when copying the commands. In `main.nf`, `System.getenv('RCAC_SCRATCH')` reads the scratch directory set by Purdue HPC.
 
 If you already have the repository, enter it and run `bash setup.sh`. The script keeps valid existing files and stops if a download or compressed-file check fails.
 
@@ -77,6 +86,18 @@ The same three steps become three processes in [main.nf]({{ '/main.nf' | relativ
 - `emit` gives an output channel a name.
 - `publishDir` copies the declared outputs into the results folder.
 - `${task.cpus}` passes the process's CPU count to the tool.
+
+### Make RCAC's tools available to task shells
+
+Each launcher runs `module --force purge` before loading its modules. On the tested cluster, this removes the auto-loaded XALT module whose `LD_PRELOAD` interfered with the biocontainer images.
+
+RCAC's biocontainer modules provide `fastp`, `fastqc`, and `multiqc` as Bash functions. A separate task shell needs those functions exported. Nextflow automatically reads [nextflow.config]({{ '/nextflow.config' | relative_url }}) from the repository:
+
+```groovy
+{% include_relative nextflow.config %}
+```
+
+`process.beforeScript` resets and loads the tool modules, then exports their functions before each task command runs. This setup applies to both executors. Keep `nextflow.config` beside `main.nf`; `-c hpc.config` adds Slurm scheduling settings without replacing it. Without the task setup, the tested runs failed with exit code `127` (command not found).
 
 ### The complete workflow
 
@@ -114,7 +135,7 @@ Here, the head job runs the Nextflow manager. Nextflow submits each fastp, FastQ
 {% include_relative qc_nextflow_slurm.sh %}
 ```
 
-The head job requests one CPU and 8 GB. Each task gets its CPUs, memory, and time limit from `main.nf`. The executor, partition, and account are set in [hpc.config]({{ '/hpc.config' | relative_url }}):
+The head job requests two CPUs and 8 GB. Each task gets its CPUs, memory, and time limit from `main.nf`. The executor, partition, and account are set in [hpc.config]({{ '/hpc.config' | relative_url }}):
 
 ```groovy
 {% include_relative hpc.config %}
@@ -133,9 +154,11 @@ sbatch -A YOUR_ACCOUNT -p YOUR_PARTITION qc_nextflow_slurm.sh
 squeue -u "$USER"
 ```
 
-**First Slurm demonstration:** If the local example has already completed, `-resume` can reuse its tasks, so no new Slurm task jobs may appear. To demonstrate Slurm submission, remove `-resume` from `qc_nextflow_slurm.sh` for that first run. Put it back for later resubmissions. Separate work folders do not isolate the run history or cached tasks.
+**First Slurm demonstration:** `qc_nextflow_slurm.sh` deliberately omits `-resume`, so submitting it starts new tasks even after a completed local run. The local launcher includes `-resume`. Separate work folders do not isolate the run history or cached tasks.
 
-Run one Nextflow example at a time. Watch for task jobs in `squeue` when using the Slurm executor. The 30-minute head-job limit includes time spent waiting for child jobs; if it expires, resubmit the launcher to resume.
+The collaborator reported about six minutes for the Slurm route with an empty queue. Allow for queue delays; this is an observed runtime, not a guarantee.
+
+Run one Nextflow example at a time. Watch for task jobs in `squeue` when using the Slurm executor. The 30-minute head-job limit includes time spent waiting for child jobs; if it expires, follow the resume instructions below before resubmitting.
 
 ## Publish outputs with publishDir
 
@@ -185,11 +208,13 @@ Check that the reports describe the expected input files. A job that finished wi
 
 ## Resume and troubleshoot
 
-Both Nextflow launchers already include `-resume`. To reuse matching completed tasks, resubmit the same script:
+The local launcher includes `-resume`, so resubmitting it reuses matching completed tasks.
+
+The Slurm launcher starts fresh by default. **To resume a Slurm run**, add `-resume RUN_NAME` to its `nextflow run` command, replacing `RUN_NAME` with the Slurm run name from `nextflow log`, then resubmit. Use that specific name after switching between routes.
 
 ```bash
 sbatch -A YOUR_ACCOUNT -p YOUR_PARTITION qc_nextflow_local.sh
-# Or resume the Slurm example:
+# After adding -resume RUN_NAME to the Slurm launcher:
 sbatch -A YOUR_ACCOUNT -p YOUR_PARTITION qc_nextflow_slurm.sh
 ```
 
@@ -200,7 +225,8 @@ Keep **both** `.nextflow/` and `work/`. The first stores task metadata; the seco
 Load Nextflow and inspect the run from the working directory:
 
 ```bash
-module load biocontainers nextflow
+module --force purge
+module load nextflow
 cd "$RCAC_SCRATCH/nextflow_workflow"
 nextflow log
 nextflow log last -f name,status,exit,workdir
@@ -246,7 +272,7 @@ Read the Slurm output file in the working directory and the `.nextflow.log` file
 | `.command.err` | Tool error messages |
 | `.exitcode` | The task's exit status |
 
-For a missing module, check `module avail` or `module spider`. For rejected Slurm jobs, check your allocation and the account/partition in `hpc.config`. Debug tool commands inside an interactive compute allocation.
+For exit code `127` from a QC tool, check that `nextflow.config` is present and its module-load/export commands succeeded. For a missing module, check `module avail` or `module spider`. For rejected Slurm jobs, check your allocation and the account/partition in `hpc.config`. Debug tool commands inside an interactive compute allocation.
 
 ### One dash or two?
 

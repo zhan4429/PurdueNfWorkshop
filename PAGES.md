@@ -9,6 +9,7 @@ separate build workflow is needed.
 - **nf-core lesson:** edit `nf-core.md`. Its placeholder is at `/nf-core/`.
 - **Code examples:** edit the original `.sh`, `.nf`, or `.config` file. The guide
   includes these files directly, so the displayed code updates with them.
+  This includes `nextflow.config` for RCAC task-shell setup and `hpc.config` for Slurm.
 - **Appearance:** edit `assets/site.css`.
 - **Copy buttons and navigation:** edit `assets/site.js`.
 - **Header, page title, and footer:** edit `_layouts/guide.html`.

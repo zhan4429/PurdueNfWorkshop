@@ -3,6 +3,13 @@
 Compare a Bash loop with a Nextflow workflow: **fastp → FastQC → MultiQC**.
 The scripts use Slurm and the `biocontainers` and `nextflow` modules.
 Input/output parameters and task resources are defined in `main.nf`.
+`nextflow.config` loads and exports RCAC's tool functions for task shells;
+`hpc.config` adds Slurm scheduling settings. Keep these files together.
+
+The module fixes in [PR #1](https://github.com/zhan4429/PurdueNfWorkshop/pull/1)
+were tested on Gautschi by Arun Seetharam: all three routes and local resume
+passed, including 23 Slurm child jobs. Each launcher purges preloaded modules
+to avoid XALT/biocontainer conflicts.
 
 ## Setup
 
@@ -18,14 +25,15 @@ separately in `$RCAC_SCRATCH/nextflow_workshop/fastq`.
 ## Run
 
 Submit from `$RCAC_SCRATCH/nextflow_workflow`, which contains the scripts. Replace `YOUR_ACCOUNT` and `YOUR_PARTITION`
-with your Slurm allocation and partition. Before the HPC example, also replace
+with your Slurm allocation and partition. Run `slist` to find your accounts.
+Before the Slurm example, also replace
 `YOUR_ACCOUNT` in `hpc.config`. Its `queue = 'cpu'` selects the task partition;
 change it if needed. Run each example in turn:
 
 ```bash
 sbatch -A YOUR_ACCOUNT -p YOUR_PARTITION qc_forloop.sh
 sbatch -A YOUR_ACCOUNT -p YOUR_PARTITION qc_nextflow_local.sh
-sbatch -A YOUR_ACCOUNT -p YOUR_PARTITION qc_nextflow_hpc.sh
+sbatch -A YOUR_ACCOUNT -p YOUR_PARTITION qc_nextflow_slurm.sh
 squeue -u "$USER"
 ```
 
@@ -33,10 +41,9 @@ squeue -u "$USER"
 - **Nextflow local:** runs parallel tasks within one compute allocation.
 - **Nextflow HPC:** submits each task as a separate Slurm job.
 
-For the first Slurm demonstration after a completed local run, remove `-resume`
-from `qc_nextflow_hpc.sh` so it submits new tasks instead of reusing the local
-cache. Put it back for later resubmissions. Separate work folders do not isolate
-the run history or cached tasks.
+The local launcher includes `-resume`. The Slurm launcher deliberately omits it
+so the first Slurm demonstration submits new tasks rather than reusing the local
+cache. Separate work folders do not isolate run history or cached tasks.
 
 The `sbatch` options configure the job running Nextflow. `hpc.config` configures
 the separate HPC task jobs; its account and partition are set explicitly.
@@ -48,10 +55,10 @@ allocation with its `#SBATCH` directives.
 Reports are in `results/forloop`, `results/local`, and `results/slurm`.
 Open `<results folder>/multiqc/multiqc_report.html` for the combined QC report.
 
-Both Nextflow scripts include `-resume`: resubmit the same script to reuse
-completed tasks. Keep `.nextflow/` and `work/`. Run one Nextflow example at a
-time. To resume an older run after switching examples, use `-resume RUN_NAME`
-with a run name from `nextflow log`.
+Resubmit the local launcher to resume. For Slurm resume, add `-resume RUN_NAME`
+to the `nextflow run` command in `qc_nextflow_slurm.sh`, using the Slurm run name
+from `nextflow log`, then resubmit. Keep `.nextflow/` and `work/`. Run one
+Nextflow example at a time.
 
 This teaching example processes each FASTQ independently in single-end mode.
 The 11 files create 11 FASTP tasks, 11 FASTQC tasks, and one MultiQC task.
