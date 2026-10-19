@@ -35,8 +35,6 @@ Nextflow describes this as a **dataflow**: FastQC starts when its trimmed reads 
 
 You'll need HPC access, a Slurm allocation, and the `biocontainers` and `nextflow` modules. Submit the examples through `sbatch` so the work runs on compute nodes. Run `slist` on the cluster to find your available accounts.
 
-> **Cluster-tested setup:** In [PR #1](https://github.com/zhan4429/PurdueNfWorkshop/pull/1), Arun Seetharam reports successful Bash, local, local-resume, and Slurm runs on Gautschi on October 19, 2026. The Slurm run submitted 23 child jobs. Keep the module reset in each launcher and the task setup in `nextflow.config`; both address failures found during those tests.
-
 Clone the workshop into scratch:
 
 ```bash
@@ -99,7 +97,7 @@ Keep both files beside `main.nf`. The local launcher uses `nextflow.config` alon
 
 ### Make RCAC's tools available to task shells
 
-Each launcher runs `module --force purge` before loading its modules. On the tested cluster, this removes the auto-loaded XALT module whose `LD_PRELOAD` interfered with the biocontainer images.
+Each launcher runs `module --force purge` before loading its modules. This removes preloaded modules such as XALT, whose `LD_PRELOAD` can interfere with biocontainer images.
 
 RCAC's biocontainer modules provide `fastp`, `fastqc`, and `multiqc` as Bash functions. A separate task shell needs those functions exported. Nextflow automatically reads [nextflow.config]({{ '/nextflow.config' | relative_url }}) from the repository:
 
@@ -109,7 +107,7 @@ RCAC's biocontainer modules provide `fastp`, `fastqc`, and `multiqc` as Bash fun
 
 `module --force purge` removes conflicting modules; `module load` defines the tool functions; `export -f` passes them to the child Bash shell that executes the task. All task module loading is handled in `nextflow.config`; `main.nf` defines the workflow and its task resources.
 
-`process.beforeScript` resets and loads the tool modules, then exports their functions before each task command runs. This setup applies to both executors. Keep `nextflow.config` beside `main.nf`; `-c hpc.config` adds Slurm scheduling settings without replacing it. Without the task setup, the tested runs failed with exit code `127` (command not found).
+`process.beforeScript` resets and loads the tool modules, then exports their functions before each task command runs. This setup applies to both executors. Keep `nextflow.config` beside `main.nf`; `-c hpc.config` adds Slurm scheduling settings without replacing it. Without this task setup, the tools may fail with exit code `127` (command not found).
 
 ### The complete workflow
 
@@ -159,7 +157,7 @@ The head job requests two CPUs. Each task gets its CPU count and time limit from
 
 The `#SBATCH` settings describe the launcher job; the process directives in `main.nf` describe individual tasks. In local mode, those tasks share the launcher's allocation. In Slurm mode, each task receives its own allocation.
 
-On the tested [Gautschi CPU partition](https://docs.rcac.purdue.edu/userguides/gautschi/run_jobs/queues/), memory is allocated in proportion to requested cores. An explicit memory request can cause Slurm to allocate additional cores, so the allocated count may exceed `-c`. Check the job's actual allocation with `scontrol show job JOBID`, replacing `JOBID` with the ID from `sbatch`.
+On the [Gautschi CPU partition](https://docs.rcac.purdue.edu/userguides/gautschi/run_jobs/queues/), memory is allocated in proportion to requested cores. An explicit memory request can cause Slurm to allocate additional cores, so the allocated count may exceed `-c`. Check the job's actual allocation with `scontrol show job JOBID`, replacing `JOBID` with the ID from `sbatch`.
 
 The launchers omit `--mem`, and the processes omit the `memory` directive. Memory follows the partition’s default allocation per core. The Slurm head job limits the Nextflow JVM heap to 1 GB with `NXF_OPTS`, leaving room for JVM overhead. Check the partition’s memory policy if adapting these examples to another system.
 
@@ -175,8 +173,6 @@ squeue -u "$USER"
 ```
 
 **First Slurm demonstration:** `qc_nextflow_slurm.sh` deliberately omits `-resume`, so submitting it starts new tasks even after a completed local run. The local launcher includes `-resume`. Separate work folders do not isolate the run history or cached tasks.
-
-The collaborator reported about six minutes for the Slurm route with an empty queue. Allow for queue delays; this is an observed runtime, not a guarantee.
 
 Run one Nextflow example at a time. Watch for task jobs in `squeue` when using the Slurm executor. The 30-minute head-job limit includes time spent waiting for child jobs; if it expires, follow the resume instructions below before resubmitting.
 

@@ -8,10 +8,7 @@ Input/output parameters and task resources are defined in `main.nf`.
 automatically for both routes; only the Slurm launcher adds `-c hpc.config`.
 Keep both configuration files beside `main.nf`.
 
-The module fixes in [PR #1](https://github.com/zhan4429/PurdueNfWorkshop/pull/1)
-were tested on Gautschi by Arun Seetharam: all three routes and local resume
-passed, including 23 Slurm child jobs. Each launcher purges preloaded modules
-to avoid XALT/biocontainer conflicts.
+Each launcher purges preloaded modules to avoid XALT/biocontainer conflicts.
 
 ## Setup
 
@@ -47,7 +44,6 @@ squeue -u "$USER"
 The local launcher includes `-resume`. The Slurm launcher deliberately omits it
 so the first Slurm demonstration submits new tasks rather than reusing the local
 cache. Separate work folders do not isolate run history or cached tasks.
-The collaborator observed about six minutes for the Slurm route with an empty queue.
 
 The `sbatch` options configure the job running Nextflow. `hpc.config` configures
 the separate HPC task jobs; their account comes from the head job, and their
