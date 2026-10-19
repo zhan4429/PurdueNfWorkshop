@@ -8,7 +8,7 @@
 #SBATCH -o qc_nextflow_local_%j.out
 
 set -euo pipefail
-module load biocontainers nextflow
+module load nextflow
 
 # Submit from $RCAC_SCRATCH/nextflow_workflow.
 nextflow run main.nf \
