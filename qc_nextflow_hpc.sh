@@ -15,4 +15,4 @@ export NXF_OPTS='-Xms1g -Xmx4g'
 
 # Submit from $RCAC_SCRATCH/nextflow_workflow.
 nextflow run main.nf -c hpc.config \
-    --outdir results/slurm -w work/slurm -resume -ansi-log false
+    --outdir results/slurm -w work/slurm
