@@ -8,6 +8,7 @@
 #SBATCH -o qc_nextflow_local_%j.out
 
 set -euo pipefail
+module --force purge
 module load nextflow
 
 # Submit from $RCAC_SCRATCH/nextflow_workflow.
