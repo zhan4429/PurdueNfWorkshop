@@ -106,7 +106,7 @@ RCAC's biocontainer modules provide `fastp`, `fastqc`, and `multiqc` as Bash fun
 {% include_relative nextflow.config %}
 ```
 
-`module --force purge` removes conflicting modules; `module load` defines the tool functions; `export -f` passes them to the child Bash shell that executes the task. The per-process `module` directives in `main.nf` also request tool modules, but do not replace the function exports.
+`module --force purge` removes conflicting modules; `module load` defines the tool functions; `export -f` passes them to the child Bash shell that executes the task. All task module loading is handled in `nextflow.config`; `main.nf` defines the workflow and its task resources.
 
 `process.beforeScript` resets and loads the tool modules, then exports their functions before each task command runs. This setup applies to both executors. Keep `nextflow.config` beside `main.nf`; `-c hpc.config` adds Slurm scheduling settings without replacing it. Without the task setup, the tested runs failed with exit code `127` (command not found).
 

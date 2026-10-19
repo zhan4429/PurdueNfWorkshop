@@ -10,7 +10,6 @@ params.outdir = 'results/local'
 // Step 1: trim reads with fastp
 process FASTP {
     tag "${reads.simpleName}"
-    module 'biocontainers:fastp'
     cpus 2
     memory '4 GB'
     time '30m'
@@ -37,7 +36,6 @@ process FASTP {
 // Step 2: FastQC on the trimmed reads
 process FASTQC {
     tag "${reads.simpleName}"
-    module 'biocontainers:fastqc'
     cpus 2
     memory '4 GB'
     time '30m'
@@ -59,7 +57,6 @@ process FASTQC {
 
 // Step 3: combine all reports with MultiQC
 process MULTIQC {
-    module 'biocontainers:multiqc'
     cpus 1
     memory '4 GB'
     time '30m'
