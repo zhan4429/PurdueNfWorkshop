@@ -21,10 +21,9 @@ cd "$RCAC_SCRATCH/PurdueNfWorkshop"
 bash setup.sh
 ```
 
-Scripts run from `$RCAC_SCRATCH/PurdueNfWorkshop`. FASTQ files are stored
-separately in `$RCAC_SCRATCH/nextflow_data/fastq`. Existing checkouts can
-stay where they are; submit jobs from their repository directory. If you used
-an earlier version, rerun `bash setup.sh` to download data into the new folder.
+Run the scripts from the repository directory. `setup.sh` downloads FASTQs
+into `data/` there; reports go into `results/`. If you used an earlier version,
+rerun `bash setup.sh` to populate `data/`.
 
 ## Run
 

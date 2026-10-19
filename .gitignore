@@ -25,14 +25,24 @@ $RECYCLE.BIN/
 .env
 .env.*
 
+# Workshop input data and outputs
+/data/
+/output/
+/outputs/
+
 # Nextflow cache, task files, and results
 /.nextflow/
 /.nextflow.log*
 /work/
 /results/
 
-# Slurm output logs
+# Runtime and Slurm logs
+*.log
+*.log.*
+/slurm-*.out
+/slurm-*.err
 /qc_*_*.out
+/qc_*_*.err
 
 # GitHub Pages local build files
 /_site/

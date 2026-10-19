@@ -14,5 +14,8 @@ exclude:
   - MATERIALS_REVIEW.md
   - PAGES.md
   - vendor
+  - data
+  - output
+  - outputs
   - work
   - results

@@ -1,6 +1,6 @@
 // Read QC with Nextflow: fastp -> FastQC -> MultiQC
 
-params.fastq_dir = "${System.getenv('RCAC_SCRATCH')}/nextflow_data/fastq"
+params.fastq_dir = 'data'
 params.outdir = 'results/local'
 
 // Each FASTQ is processed independently in single-end mode.
