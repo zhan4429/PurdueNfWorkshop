@@ -143,24 +143,22 @@ Running `nextflow run nf-core/demo` alone does not select an HPC or container pr
     └── nf-core-rnaseq/3.27.0/3_27_0/    # RNA-seq code
 ```
 
-A maintainer prepares the folders and downloads a release using Nextflow, Apptainer, and the nf-core toolkit:
+A maintainer prepares the folders and downloads a release using Nextflow, Apptainer, and a current nf-core toolkit with native `--container-system apptainer` support ([verified in tools 4.2.0](https://github.com/nf-core/tools/blob/4.2.0/nf_core/__main__.py#L341-L345)):
 
 ```bash
 export NXF_APPTAINER_CACHEDIR="/depot/YOUR_GROUP/nfcore/container-images"
-# Compatibility variable read by the nf-core downloader.
-export NXF_SINGULARITY_CACHEDIR="$NXF_APPTAINER_CACHEDIR"
 mkdir -p "$NXF_APPTAINER_CACHEDIR" \
   /depot/YOUR_GROUP/nfcore/pipelines/nf-core-demo
 
 nf-core pipelines download demo -r 1.2.0 \
   --outdir /depot/YOUR_GROUP/nfcore/pipelines/nf-core-demo/1.2.0 \
   --download-configuration yes \
-  --container-system singularity \
+  --container-system apptainer \
   --container-cache-utilisation amend \
   --compress none
 ```
 
-The toolkit uses the compatibility names shown above for Apptainer-compatible downloads. **`amend` adds missing images to the central cache and avoids copying images into the pipeline's folder.** Repeat for other pipelines with the same image folder and a different pipeline name, release, and `--outdir`. Existing matching images can be reused. See the [nf-core downloader documentation](https://nf-co.re/docs/nf-core-tools/cli/pipelines/download).
+**`amend` adds missing images to the central cache and avoids copying images into the pipeline's folder.** Repeat for other pipelines with the same image folder and a different pipeline name, release, and `--outdir`. Existing matching images can be reused. See the [nf-core downloader documentation](https://nf-co.re/docs/nf-core-tools/cli/pipelines/download).
 
 Inspect the downloaded code directory: its name may be `1_2_0/` or `workflow/`, depending on the toolkit version. Use the directory containing `main.nf` and `nextflow.config`.
 
