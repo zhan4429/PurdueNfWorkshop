@@ -72,7 +72,7 @@ Alternatively, use the batch script below. Keep an interactive allocation alive 
 
 ## Control where Nextflow writes
 
-Purdue uses Apptainer. Some Nextflow and nf-core settings still contain the historic word **Singularity**; this does not mean you must install Singularity.
+Purdue uses Apptainer.
 
 Prepare the workspace before submitting the launch script later in this guide:
 
