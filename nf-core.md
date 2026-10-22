@@ -112,6 +112,61 @@ mkdir -p "$NXF_APPTAINER_CACHEDIR"
 
 Scratch is not backed up. Keep the input sheet, run command, configuration, and final reports with your archived results.
 
+## Two ways to obtain a pipeline
+
+**Pipeline code and container images are stored separately.** A direct run downloads code into Nextflow's asset cache. The nf-core toolkit lets you prepare a group installation in a location you choose.
+
+| Where files go | Direct `nextflow run nf-core/demo` | Download first with the nf-core toolkit |
+| --- | --- | --- |
+| Pipeline code | Under `$NXF_ASSETS`, which defaults to `$NXF_HOME/assets`. With no overrides, the root is `$HOME/.nextflow/assets`. | Under `--outdir`, for example `/depot/YOUR_GROUP/pipelines/nf-core-demo/1.1.0/1_1_0/`. |
+| Container images | Pulled as needed into the configured Apptainer image cache. | Can be included in the download bundle for group reuse. Point Nextflow to that image folder when running. |
+| Institutional configs | Normally fetched from nf-core/configs when configuring the run. | Included when requested with `--download-configuration yes`. |
+| How you launch | Use the repository name, such as `nf-core/demo`. | Use the local directory containing `main.nf` and `nextflow.config`. |
+
+For pipeline-code locations, see [Nextflow's environment settings](https://docs.seqera.io/nextflow/reference/env-vars#nxf_assets). With this guide's `NXF_HOME="$PWD/.nxf-home"`, the asset root is `$PWD/.nxf-home/assets`, unless you set `NXF_ASSETS` separately.
+
+### Where images go during a direct run
+
+With `-profile test,purdue_gautschi`, the [Gautschi profile](https://github.com/nf-core/configs/blob/master/conf/purdue_gautschi.config) stores images in `$RCAC_SCRATCH/.apptainer/cache`. Without an explicit image-cache setting or environment override, Nextflow's native Apptainer default is an `apptainer/` folder under the work directory, usually `work/apptainer/`. Images are reused on later runs. See [Nextflow's Apptainer image handling](https://docs.seqera.io/nextflow/container/apptainer#apptainer-and-docker-hub).
+
+Running `nextflow run nf-core/demo` alone does not select an HPC or container profile. Use the full profiled command above on Purdue.
+
+### Download once and share with your group
+
+A group maintainer can prepare the demo in advance using the nf-core toolkit, with Nextflow and Apptainer available:
+
+```bash
+nf-core pipelines download demo -r 1.1.0 \
+  --outdir /depot/YOUR_GROUP/pipelines/nf-core-demo/1.1.0 \
+  --download-configuration yes \
+  --container-cache-utilisation copy \
+  --compress none
+```
+
+When prompted, choose to download Apptainer-compatible images. The `copy` option includes them in the bundle. Inspect the downloaded folders: code may be in `1_1_0/` or `workflow/`, and the image folder name varies. See the [nf-core download instructions](https://nf-co.re/docs/nf-core-tools/cli/pipelines/download).
+
+In your Slurm script, set the actual downloaded image path and run the local code:
+
+```bash
+# Replace YOUR_GROUP and IMAGE_FOLDER with your installation's paths.
+export NXF_APPTAINER_CACHEDIR="/depot/YOUR_GROUP/pipelines/nf-core-demo/1.1.0/IMAGE_FOLDER"
+
+nextflow run /depot/YOUR_GROUP/pipelines/nf-core-demo/1.1.0/1_1_0/ \
+  -profile test,purdue_gautschi \
+  -c custom.config --cluster_account YOUR_ACCOUNT \
+  --outdir "$PWD/results" -resume
+```
+
+Add this line to your own `custom.config` so the Gautschi profile uses the image path exported by your script:
+
+```groovy
+apptainer.cacheDir = System.getenv('NXF_APPTAINER_CACHEDIR')
+```
+
+Use the Slurm script below as the wrapper, replacing its image-cache export and run command with this example. For RNA-seq or another pipeline, substitute the release, local path, and required inputs; use `test` only for test datasets.
+
+Both modes can reuse the same image cache. The toolkit makes an explicit, shareable installation convenient. Keep group code and images readable from all compute nodes, let a maintainer complete missing images, and give each analysis its own scratch work directory and run history. Apptainer's own `APPTAINER_CACHEDIR` remains per user. Pre-downloading code and images does not also prepare every plugin or reference dataset.
+
 ## Customize a site profile safely
 
 Institutional profiles provide sensible defaults. Use a small overlay configuration for project-specific resources rather than editing the shared nf-core profile.
