@@ -29,10 +29,10 @@ There are two types of profiles to distinguish:
 
 ```bash
 # Container-only profile: NOT a complete HPC configuration
-nextflow run nf-core/demo -r 1.1.0 -profile test,apptainer
+nextflow run nf-core/demo -r 1.2.0 -profile test,apptainer
 
 # Gautschi profile: Slurm + Apptainer + site policies
-nextflow run nf-core/demo -r 1.1.0 -profile test,purdue_gautschi \
+nextflow run nf-core/demo -r 1.2.0 -profile test,purdue_gautschi \
   --cluster_account YOUR_ACCOUNT --outdir results
 ```
 
@@ -118,7 +118,7 @@ Scratch is not backed up. Keep the input sheet, run command, configuration, and 
 
 | Where files go | Direct `nextflow run nf-core/demo` | Download first with the nf-core toolkit |
 | --- | --- | --- |
-| Pipeline code | Under `$NXF_ASSETS`, which defaults to `$NXF_HOME/assets`. With no overrides, the root is `$HOME/.nextflow/assets`. | Under `--outdir`, for example `/depot/YOUR_GROUP/pipelines/nf-core-demo/1.1.0/1_1_0/`. |
+| Pipeline code | Under `$NXF_ASSETS`, which defaults to `$NXF_HOME/assets`. With no overrides, the root is `$HOME/.nextflow/assets`. | Under `--outdir`, for example `/depot/YOUR_GROUP/pipelines/nf-core-demo/1.2.0/1_2_0/`. |
 | Container images | Pulled as needed into the configured Apptainer image cache. | Can be included in the download bundle for group reuse. Point Nextflow to that image folder when running. |
 | Institutional configs | Normally fetched from nf-core/configs when configuring the run. | Included when requested with `--download-configuration yes`. |
 | How you launch | Use the repository name, such as `nf-core/demo`. | Use the local directory containing `main.nf` and `nextflow.config`. |
@@ -136,22 +136,22 @@ Running `nextflow run nf-core/demo` alone does not select an HPC or container pr
 A group maintainer can prepare the demo in advance using the nf-core toolkit, with Nextflow and Apptainer available:
 
 ```bash
-nf-core pipelines download demo -r 1.1.0 \
-  --outdir /depot/YOUR_GROUP/pipelines/nf-core-demo/1.1.0 \
+nf-core pipelines download demo -r 1.2.0 \
+  --outdir /depot/YOUR_GROUP/pipelines/nf-core-demo/1.2.0 \
   --download-configuration yes \
   --container-cache-utilisation copy \
   --compress none
 ```
 
-When prompted, choose to download Apptainer-compatible images. The `copy` option includes them in the bundle. Inspect the downloaded folders: code may be in `1_1_0/` or `workflow/`, and the image folder name varies. See the [nf-core download instructions](https://nf-co.re/docs/nf-core-tools/cli/pipelines/download).
+When prompted, choose to download Apptainer-compatible images. The `copy` option includes them in the bundle. Inspect the downloaded folders: code may be in `1_2_0/` or `workflow/`, and the image folder name varies. See the [nf-core download instructions](https://nf-co.re/docs/nf-core-tools/cli/pipelines/download).
 
 In your Slurm script, set the actual downloaded image path and run the local code:
 
 ```bash
 # Replace YOUR_GROUP and IMAGE_FOLDER with your installation's paths.
-export NXF_APPTAINER_CACHEDIR="/depot/YOUR_GROUP/pipelines/nf-core-demo/1.1.0/IMAGE_FOLDER"
+export NXF_APPTAINER_CACHEDIR="/depot/YOUR_GROUP/pipelines/nf-core-demo/1.2.0/IMAGE_FOLDER"
 
-nextflow run /depot/YOUR_GROUP/pipelines/nf-core-demo/1.1.0/1_1_0/ \
+nextflow run /depot/YOUR_GROUP/pipelines/nf-core-demo/1.2.0/1_2_0/ \
   -profile test,purdue_gautschi \
   -c custom.config --cluster_account YOUR_ACCOUNT \
   --outdir "$PWD/results" -resume
@@ -242,7 +242,7 @@ Add `-c custom.config` to the same `nextflow run` command you normally use. Keep
 For the workshop demo, run this command inside a compute allocation, with your account substituted:
 
 ```bash
-nextflow run nf-core/demo -r 1.1.0 \
+nextflow run nf-core/demo -r 1.2.0 \
   -profile test,purdue_gautschi \
   -c custom.config \
   --cluster_account YOUR_ACCOUNT \
@@ -252,7 +252,7 @@ nextflow run nf-core/demo -r 1.1.0 \
 `-c` adds your custom configuration on top of the pipeline and institutional settings. Review the effective configuration before a large run:
 
 ```bash
-nextflow pull nf-core/demo -r 1.1.0
+nextflow pull nf-core/demo -r 1.2.0
 nextflow -c custom.config config nf-core/demo \
   -profile test,purdue_gautschi -flat | less
 ```
@@ -289,7 +289,7 @@ export APPTAINER_TMPDIR="$PWD/apptainer-tmp"
 mkdir -p "$NXF_APPTAINER_CACHEDIR" \
   "$APPTAINER_CACHEDIR" "$APPTAINER_TMPDIR"
 
-nextflow run nf-core/demo -r 1.1.0 -profile test,purdue_gautschi \
+nextflow run nf-core/demo -r 1.2.0 -profile test,purdue_gautschi \
   -c custom.config --cluster_account YOUR_ACCOUNT \
   --outdir "$PWD/results" -resume -ansi-log false
 ```
@@ -301,7 +301,52 @@ cd "$RCAC_SCRATCH/nfcore-workshop"
 sbatch run_demo.sh
 ```
 
-The demo is pinned to `1.1.0`, as in the [RCAC hands-on lesson](https://docs.rcac.purdue.edu/lifesciences/guides/nextflow-gautschi/#hands-on-2-nf-coredemo). For another pipeline, choose a compatible release with `-r VERSION` and supply its required inputs. Save your Nextflow version and custom config with the results; a pipeline release pin does not freeze the shared institutional profile.
+The demo is pinned to [release `1.2.0`](https://github.com/nf-core/demo/releases/tag/1.2.0). It requires Nextflow **25.10.4 or newer**, as specified in its [pipeline configuration](https://github.com/nf-core/demo/blob/1.2.0/nextflow.config). Check the loaded version with `nextflow -version`. For another pipeline, choose a compatible release with `-r VERSION` and supply its required inputs. Save your Nextflow version and custom config with the results; a pipeline release pin does not freeze the shared institutional profile.
+
+## Use idle resources with standby
+
+**Standby is useful for running short tasks on idle capacity across the cluster, including resources outside your group's purchased allocation.** On Negishi, standby jobs have low priority, can run for at most **four hours per job**, and do not consume the group's normal allocation balance. Start time depends on available capacity. See [RCAC's standby policy](https://www.rcac.purdue.edu/knowledge/negishi/run/slurm/queues).
+
+The four-hour limit applies to each Slurm job, not to the total duration of a pipeline whose manager stays running. Nextflow can reuse completed tasks after an interruption with `-resume`.
+
+### Enable standby for pipeline tasks
+
+The [Negishi profile documentation](https://github.com/nf-core/configs/blob/master/docs/purdue_negishi.md#standby-queue-optional) enables standby with `--use_standby true`. The profile checks each task's requested resources:
+
+| Profile | Tasks eligible for standby | Other tasks |
+| --- | --- | --- |
+| `purdue_negishi` | Time at most 4 hours and memory at most 256 GB | Normal QoS |
+| `purdue_gautschi` | CPU tasks with time at most 4 hours and memory at most 384 GB | Normal QoS, including high-memory and GPU tasks |
+
+Create a copy of the Slurm script above named `run_demo_standby.sh`. Keep its environment setup and use this run command **on Negishi**:
+
+```bash
+nextflow run nf-core/demo -r 1.2.0 \
+  -profile test,purdue_negishi \
+  --cluster_account YOUR_ACCOUNT \
+  --use_standby true \
+  --outdir "$PWD/results" -resume -ansi-log false
+```
+
+On Gautschi, use `test,purdue_gautschi` instead. For a downloaded pipeline, replace `nf-core/demo -r 1.2.0` with its local code directory. Keep `-c custom.config` if you need the shared-image override or project resource settings; a step requesting more than four hours will use normal QoS. The profile adds `--qos=standby` to eligible child jobs automatically.
+
+### Choose where the manager runs
+
+To run the Nextflow manager itself in standby too, submit the copied script with:
+
+```bash
+sbatch --qos=standby --time=04:00:00 run_demo_standby.sh
+```
+
+Use your usual account and the `cpu` partition from the script. `standby` is a **QoS**, not an account. The submission option controls the manager job; `--use_standby true` controls the pipeline's child jobs.
+
+For longer analyses, keep the manager on normal QoS and request enough walltime for the whole run. Eligible child tasks can still use standby. This also lets longer tasks finish on normal QoS while the manager remains active.
+
+### Resume after a timeout or failed task
+
+Once the previous manager has stopped, resubmit the same script from the same run directory. Its run command already contains `-resume`. Keep `.nextflow/`, the task work directory, inputs, and pipeline release so eligible completed tasks can be reused. Inspect and correct the failure before resubmitting when needed.
+
+**Resume preserves completed tasks; an interrupted task normally starts again from the beginning.** It does not give one task unlimited runtime in four-hour pieces. If a task repeatedly needs more than four hours, give that process a longer time request so the profile routes it to normal QoS. Automatic retries also depend on the pipeline's retry policy. See [Nextflow's resume documentation](https://docs.seqera.io/nextflow/cache-and-resume).
 
 ## Inspect, resume, and preserve
 
