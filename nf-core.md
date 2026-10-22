@@ -89,31 +89,75 @@ Scratch is not backed up. Keep the input sheet, run command, configuration, and 
 
 Institutional profiles provide sensible defaults. Use a small overlay configuration for project-specific resources rather than editing the shared nf-core profile.
 
+### When the default memory is not enough
+
+A pipeline's predefined resources may be too small for your data. For example, an alignment task might fail because it runs out of memory. Confirm the cause in the task log and Slurm report, then increase the resources for the affected steps in a **custom configuration file**. You do not need to edit the pipeline source.
+
+Choose the selector based on how broadly the change should apply:
+
+| Selector | What it changes | When to use it |
+| --- | --- | --- |
+| `withLabel` | Every process carrying the matching label, such as `process_low`, `process_medium`, or `process_high` | Several steps in a resource tier need larger requests. |
+| `withName` | A process matched by its name, alias, or fully qualified workflow path | One particular step needs more memory or time. |
+
+The spelling is **`withLabel`**. Labels and process names vary by pipeline and release. Check the pipeline's `conf/base.config` and module definitions for labels. Find a failing process's full name in the Nextflow error message, `.nextflow.log`, or execution trace.
+
 ### Example: custom.config
 
-Save the following as `custom.config` in `$RCAC_SCRATCH/nfcore-workshop`:
+The following example is adapted from a methylseq run. It combines resource tiers with an override for one alignment process. Save it as `custom.config` in your run directory. These values illustrate a larger analysis; they are **not required resources for the small demo dataset**. Choose values that fit your data and partition.
 
 ```groovy
-// Example overrides for a modest workshop run
 process {
+  // Upper bounds for each task's request (Nextflow 24.04 or newer)
+  resourceLimits = [
+    cpus: 16,
+    memory: 100.GB,
+    time: 48.h
+  ]
+
+  // Apply to every process carrying the corresponding label
   withLabel: 'process_low' {
-    cpus = 2
-    memory = '4 GB'
-    time = '2h'
+    cpus   = { 2 * task.attempt }
+    memory = { 14.GB * task.attempt }
+    time   = { 6.h * task.attempt }
   }
-  withName: '.*:FASTQC' {
-    cpus = 2
-    memory = '4 GB'
+  withLabel: 'process_medium' {
+    cpus   = { 6 * task.attempt }
+    memory = { 42.GB * task.attempt }
+    time   = { 8.h * task.attempt }
+  }
+  withLabel: 'process_high' {
+    cpus   = { 12 * task.attempt }
+    memory = { 84.GB * task.attempt }
+    time   = { 10.h * task.attempt }
+  }
+
+  // Target one process using its fully qualified name
+  withName: 'NFCORE_METHYLSEQ:METHYLSEQ:FASTQ_ALIGN_DEDUP_BWAMETH:BWAMETH_ALIGN' {
+    memory = 60.GB
+    time = 24.h
   }
 }
-// Keep the institutional Slurm executor and Apptainer settings.
 ```
 
-Labels and process names vary by pipeline. Inspect the pipeline source and configuration and use the exact names it defines. `withName` matches a process name; `withLabel` matches a label. Specific selectors can override more general settings.
+Keep the institutional Slurm executor and container settings. Copy the exact process path from **your own pipeline run**; the methylseq path above will not match a step in `nf-core/demo` or necessarily in another methylseq release.
+
+### How the overrides work
+
+- **By label:** on the first attempt, a `process_medium` task requests 6 CPUs, 42 GB, and 8 hours. Every process with that label gets those settings.
+- **By name:** the named `BWAMETH_ALIGN` process requests 60 GB and 24 hours. A matching `withName` selector takes priority over a `withLabel` selector for the same setting. Its CPU request still comes from other applicable settings because this name block does not set `cpus`.
+- **On retries:** `task.attempt` starts at 1. If Nextflow retries a medium task, attempt 2 requests 12 CPUs, 84 GB, and 16 hours, subject to the caps. These expressions do not enable retries themselves; the pipeline's `errorStrategy` and `maxRetries` must allow the retry. The fixed 60 GB and 24 hours in the name block stay fixed on retries.
+- **At the limits:** `resourceLimits` caps each task's request; it does not allocate those resources to every task. For example, a high-tier task's second attempt would calculate 24 CPUs and 168 GB, but these are capped at 16 CPUs and 100 GB. If the task needs more than the cap, it can still run out of memory. Check both your custom caps and any pipeline or site limits.
+
+For a single failing step, a smaller file containing only the relevant `withName` block inside `process { ... }` is often sufficient. To increase memory on each retry for that step as well, use `memory = { 60.GB * task.attempt }`, with suitable limits and a retry policy.
+
+See the Nextflow documentation for [selector matching and priority](https://docs.seqera.io/nextflow/config#process-selectors), [dynamic task resources](https://docs.seqera.io/nextflow/process#dynamic-task-resources), and [resource limits](https://docs.seqera.io/nextflow/reference/process/directives/resource-limits).
 
 ### Layer the override with -c
 
-Run this command inside a compute allocation, with your profile and account substituted:
+Add `-c custom.config` to the same `nextflow run` command you normally use. Keep the pipeline version, input arguments, and institutional profile for your analysis. The same approach works with a local pipeline path, as in the methylseq launch example, or a pipeline name such as `nf-core/demo`.
+
+For the workshop demo, run this command inside a compute allocation, with your profile and account substituted:
 
 ```bash
 nextflow run nf-core/demo \
