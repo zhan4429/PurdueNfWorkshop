@@ -6,7 +6,7 @@ separate build workflow is needed.
 ## Everyday edits
 
 - **Nextflow lesson:** edit `index.md`, or use **Edit this guide** on the website.
-- **nf-core lesson:** edit `nf-core.md`. Its placeholder is at `/nf-core/`.
+- **nf-core lesson:** edit `nf-core.md`. The lesson is at `/nf-core/` and includes the four-page workshop flyer.
 - **Code examples:** edit the original `.sh`, `.nf`, or `.config` file. The guide
   includes these files directly, so the displayed code updates with them.
   This includes `nextflow.config` for RCAC task-shell setup and `hpc.config` for Slurm.
