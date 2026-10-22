@@ -18,8 +18,6 @@ In [Nextflow fundamentals]({{ '/' | relative_url }}), you connected processes an
 | **Slurm** | Schedules the pipeline's tasks |
 | **Apptainer** | Provides the software in containers |
 
-This lesson expands the [four-page workshop flyer]({{ '/nfcore_fundamentals_4page_flyer_UPDATED.pdf' | relative_url }}).
-
 ## Choose the right profile
 
 There are two types of profiles to distinguish:
@@ -56,8 +54,6 @@ Global ceilings: 192 CPUs, 1500 GB, 336 hours. **Partition limits still apply.**
 
 Standby is opt-in with `--use_standby true`, for CPU tasks within 4 hours and 384 GB; high-memory and GPU tasks use normal QoS.
 
-The [RCAC tutorial](https://docs.rcac.purdue.edu/lifesciences/guides/nextflow-gautschi/) describes an earlier profile; the configuration source above supplies current settings.
-
 ## Get a Gautschi compute allocation
 
 Follow the [RCAC setup instructions](https://docs.rcac.purdue.edu/lifesciences/guides/nextflow-gautschi/#setting-up-on-gautschi):
@@ -69,7 +65,7 @@ sinteractive -A YOUR_ACCOUNT -N 1 -n 2 -p cpu -t 2:00:00
 
 # Once the compute session starts
 module purge
-module load nextflow/25.10.04
+module load nextflow
 ```
 
 Alternatively, use the batch script below. Keep an interactive allocation alive until Nextflow finishes.
@@ -230,7 +226,7 @@ Save this as `run_demo.sh` in `$RCAC_SCRATCH/nfcore-workshop`. Replace **both** 
 
 set -euo pipefail
 module purge
-module load nextflow/25.10.04
+module load nextflow
 cd "$RCAC_SCRATCH/nfcore-workshop"
 export NXF_HOME="$PWD/.nxf-home"
 export NXF_WORK="$PWD/work"
