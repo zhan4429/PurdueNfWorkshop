@@ -18,7 +18,7 @@ In [Nextflow fundamentals]({{ '/' | relative_url }}), you connected processes an
 | **Slurm** | Schedules the pipeline's tasks |
 | **Apptainer** | Provides the software in containers |
 
-This lesson follows the [four-page workshop flyer]({{ '/nfcore_fundamentals_4page_flyer_UPDATED.pdf' | relative_url }}).
+This lesson expands the [four-page workshop flyer]({{ '/nfcore_fundamentals_4page_flyer_UPDATED.pdf' | relative_url }}).
 
 ## Choose the right profile
 
@@ -31,16 +31,48 @@ There are two types of profiles to distinguish:
 
 ```bash
 # Container-only profile: NOT a complete HPC configuration
-nextflow run nf-core/demo -profile test,apptainer
+nextflow run nf-core/demo -r 1.1.0 -profile test,apptainer
 
-# Institutional profile: Slurm + Apptainer + site policies
-nextflow run nf-core/demo -profile test,PURDUE_PROFILE \
+# Gautschi profile: Slurm + Apptainer + site policies
+nextflow run nf-core/demo -r 1.1.0 -profile test,purdue_gautschi \
   --cluster_account YOUR_ACCOUNT --outdir results
 ```
 
-Use `test` only for example datasets. Purdue institutional profiles include `purdue_bell`, `purdue_gautschi`, and `purdue_negishi`; replace `PURDUE_PROFILE` with the one matching your system. Replace `YOUR_ACCOUNT` with your allocation account.
+Use `test` only for example datasets. Purdue institutional profiles include `purdue_bell`, `purdue_gautschi`, and `purdue_negishi`; choose the one matching your system. The commands below use Gautschi. Replace `YOUR_ACCOUNT` with your allocation account.
 
 > **Scratch first.** Start Nextflow from a compute allocation, not a login node. Keep work directories and container caches in `$RCAC_SCRATCH`; move important results to persistent storage.
+
+## What the Gautschi profile provides
+
+The [current Gautschi profile](https://github.com/nf-core/configs/blob/master/conf/purdue_gautschi.config) enables Slurm, native Apptainer with automatic mounts, and iGenomes at `/depot/itap/datasets/igenomes`. Supply `--cluster_account`.
+
+| Task request | Routing in the current profile |
+| --- | --- |
+| CPU task, memory at most 384 GB | `cpu` |
+| CPU task, memory above 384 GB | `highmem`; its documented policy requires at least 49 CPUs and a maximum 24-hour request |
+| `process_gpu` label | `smallgpu` by default; `--gpu_partition ai` selects H100 GPUs |
+
+Global ceilings: 192 CPUs, 1500 GB, 336 hours. **Partition limits still apply.** Highmem routing does not adjust CPUs or time; set compatible overrides.
+
+Standby is opt-in with `--use_standby true`, for CPU tasks within 4 hours and 384 GB; high-memory and GPU tasks use normal QoS.
+
+The [RCAC tutorial](https://docs.rcac.purdue.edu/lifesciences/guides/nextflow-gautschi/) describes an earlier profile; the configuration source above supplies current settings.
+
+## Get a Gautschi compute allocation
+
+Follow the [RCAC setup instructions](https://docs.rcac.purdue.edu/lifesciences/guides/nextflow-gautschi/#setting-up-on-gautschi):
+
+```bash
+# On the login node: find your account and request a compute session
+slist
+sinteractive -A YOUR_ACCOUNT -N 1 -n 2 -p cpu -t 2:00:00
+
+# Once the compute session starts
+module purge
+module load nextflow/25.10.04
+```
+
+Alternatively, use the batch script below. Keep an interactive allocation alive until Nextflow finishes.
 
 ## Control where Nextflow writes
 
@@ -51,14 +83,15 @@ Prepare the workspace before submitting the launch script later in this guide:
 ```bash
 mkdir -p "$RCAC_SCRATCH/nfcore-workshop"
 cd "$RCAC_SCRATCH/nfcore-workshop"
-mkdir -p work images apptainer-tmp apptainer-cache
+mkdir -p work apptainer-tmp apptainer-cache
 
 export NXF_HOME="$PWD/.nxf-home"
 export NXF_WORK="$PWD/work"
-export NXF_SINGULARITY_CACHEDIR="$PWD/images"
-export NXF_APPTAINER_CACHEDIR="$PWD/images"
+export NXF_APPTAINER_CACHEDIR="$RCAC_SCRATCH/.apptainer/cache"
+export NXF_SINGULARITY_CACHEDIR="$NXF_APPTAINER_CACHEDIR"
 export APPTAINER_CACHEDIR="$PWD/apptainer-cache"
 export APPTAINER_TMPDIR="$PWD/apptainer-tmp"
+mkdir -p "$NXF_APPTAINER_CACHEDIR"
 ```
 
 ### What does each variable mean?
@@ -72,7 +105,7 @@ export APPTAINER_TMPDIR="$PWD/apptainer-tmp"
 | `APPTAINER_CACHEDIR` | Apptainer's own download/blob cache, separate from Nextflow's image cache. |
 | `APPTAINER_TMPDIR` | Temporary space for pulling and converting images. |
 
-> **Check the profile's cache setting.** An institutional profile can define `apptainer.cacheDir` itself. Explicit configuration can take precedence over environment defaults. Both Nextflow cache variable names are shown for teaching; you only need the one matching the engine in use.
+> **Gautschi cache:** The [profile](https://github.com/nf-core/configs/blob/master/conf/purdue_gautschi.config) sets `apptainer.cacheDir` to `$RCAC_SCRATCH/.apptainer/cache` (fallback: `$SCRATCH`, then home). The exports match it. To relocate images, override `apptainer.cacheDir` in your custom config; changing only the environment variable may not take effect.
 
 ### Where data should live
 
@@ -80,7 +113,7 @@ export APPTAINER_TMPDIR="$PWD/apptainer-tmp"
 | --- | --- |
 | Input data | Project depot |
 | `work/` task files | Scratch |
-| `images/` container images | Scratch |
+| Nextflow container images (`$RCAC_SCRATCH/.apptainer/cache`) | Scratch |
 | Final results | Persistent storage or archive |
 
 Scratch is not backed up. Keep the input sheet, run command, configuration, and final reports with your archived results.
@@ -157,11 +190,11 @@ See the Nextflow documentation for [selector matching and priority](https://docs
 
 Add `-c custom.config` to the same `nextflow run` command you normally use. Keep the pipeline version, input arguments, and institutional profile for your analysis. The same approach works with a local pipeline path, as in the methylseq launch example, or a pipeline name such as `nf-core/demo`.
 
-For the workshop demo, run this command inside a compute allocation, with your profile and account substituted:
+For the workshop demo, run this command inside a compute allocation, with your account substituted:
 
 ```bash
-nextflow run nf-core/demo \
-  -profile test,PURDUE_PROFILE \
+nextflow run nf-core/demo -r 1.1.0 \
+  -profile test,purdue_gautschi \
   -c custom.config \
   --cluster_account YOUR_ACCOUNT \
   --outdir "$PWD/results" -resume
@@ -170,41 +203,44 @@ nextflow run nf-core/demo \
 `-c` adds your custom configuration on top of the pipeline and institutional settings. Review the effective configuration before a large run:
 
 ```bash
-nextflow config nf-core/demo -profile PURDUE_PROFILE \
-  -c custom.config -flat | less
+nextflow pull nf-core/demo -r 1.1.0
+nextflow -c custom.config config nf-core/demo \
+  -profile test,purdue_gautschi -flat | less
 ```
 
 ### Choose CPUs, memory, and time
 
-Start with pipeline defaults. Check a representative task's `trace.txt`, Slurm `seff JOBID`, and memory/time failures. Increase only the processes that need it. A request exceeding a node or partition limit can remain pending or fail submission.
+Start with pipeline defaults. Check the task trace under `results/pipeline_info/`, Slurm `seff JOBID`, and memory/time failures. Increase only the processes that need it. A request exceeding a node or partition limit can remain pending or fail submission.
 
 > **Manager resources and task resources are separate.** The manager job below requests 2 CPUs and 8 GB to run Nextflow. The institutional profile determines how each pipeline task is submitted. Manager `#SBATCH` settings are separate from `process.cpus`, `memory`, and `time`.
 
 ## Launch through Slurm
 
-Save this as `run_demo.sh` in `$RCAC_SCRATCH/nfcore-workshop`. Replace **both** occurrences of `YOUR_ACCOUNT`, plus `YOUR_PARTITION` and `PURDUE_PROFILE`. Keep `custom.config` in the same workspace.
+Save this as `run_demo.sh` in `$RCAC_SCRATCH/nfcore-workshop`. Replace **both** occurrences of `YOUR_ACCOUNT`. This example uses Gautschi's `cpu` partition and `purdue_gautschi` profile; adapt them for another cluster. Keep `custom.config` in the same workspace.
 
 ```bash
 #!/bin/bash
 #SBATCH --job-name=nfcore-demo
 #SBATCH --account=YOUR_ACCOUNT
-#SBATCH --partition=YOUR_PARTITION
+#SBATCH --partition=cpu
 #SBATCH --cpus-per-task=2
 #SBATCH --mem=8G
 #SBATCH --time=04:00:00
 #SBATCH --output=nfcore-%j.out
 
-module load nextflow
+set -euo pipefail
+module purge
+module load nextflow/25.10.04
 cd "$RCAC_SCRATCH/nfcore-workshop"
 export NXF_HOME="$PWD/.nxf-home"
 export NXF_WORK="$PWD/work"
-export NXF_APPTAINER_CACHEDIR="$PWD/images"
+export NXF_APPTAINER_CACHEDIR="$RCAC_SCRATCH/.apptainer/cache"
 export APPTAINER_CACHEDIR="$PWD/apptainer-cache"
 export APPTAINER_TMPDIR="$PWD/apptainer-tmp"
 mkdir -p "$NXF_APPTAINER_CACHEDIR" \
   "$APPTAINER_CACHEDIR" "$APPTAINER_TMPDIR"
 
-nextflow run nf-core/demo -profile test,PURDUE_PROFILE \
+nextflow run nf-core/demo -r 1.1.0 -profile test,purdue_gautschi \
   -c custom.config --cluster_account YOUR_ACCOUNT \
   --outdir "$PWD/results" -resume -ansi-log false
 ```
@@ -216,7 +252,7 @@ cd "$RCAC_SCRATCH/nfcore-workshop"
 sbatch run_demo.sh
 ```
 
-For a real pipeline, pin its release with `-r VERSION` and supply its required inputs.
+The demo is pinned to `1.1.0`, as in the [RCAC hands-on lesson](https://docs.rcac.purdue.edu/lifesciences/guides/nextflow-gautschi/#hands-on-2-nf-coredemo). For another pipeline, choose a compatible release with `-r VERSION` and supply its required inputs. Save your Nextflow version and custom config with the results; a pipeline release pin does not freeze the shared institutional profile.
 
 ## Inspect, resume, and preserve
 
@@ -230,10 +266,30 @@ nextflow clean -n      # preview only; do not rush cleanup
 
 Keep the work directory and run history available for `-resume`. Archive important results and the information needed to reproduce the run before cleaning up scratch.
 
-## Get help
+## Get help directly in nf-core Slack
 
-Join the [nf-core Slack community](https://nf-co.re/join). Ask in `#help`, `#nostupidquestions`, or the pipeline-specific channel. Include the pipeline version, command, profile, relevant logs, and sanitized samplesheet details.
+**nf-core Slack is a very useful place to ask other users and pipeline developers directly for help.** If you are stuck on a pipeline error, resource override, input format, or interpretation of a pipeline option, ask the community early. Other users may have encountered the same issue, and developers can help explain the pipeline's behavior. The [nf-core community recommends Slack as the first place to seek help running its pipelines](https://nf-co.re/join#slack).
 
-Contact Purdue RCAC for allocation, quota, and scheduler problems.
+1. [Request an invitation](https://nf-co.re/join), then sign in at [nfcore.slack.com](https://nfcore.slack.com/).
+2. Join the channel for your pipeline, such as `#methylseq`. For general help or beginner questions, use `#help` or `#nostupidquestions`.
+3. Post a clear question in the channel so other users and developers can join the discussion and benefit from the answer.
+
+### What to include in your question
+
+- Pipeline name and release (`-r`), plus your Nextflow version.
+- Cluster and profile, such as Gautschi and `purdue_gautschi`.
+- The run command and relevant `withLabel` or `withName` overrides.
+- The error message, failing process name, and relevant task logs.
+- Requested memory/time and Slurm job details when asking about resources.
+
+Remove personal information and sensitive sample details before sharing logs or samplesheets. For an nf-core bug, the community may ask you to open an issue in the pipeline's GitHub repository. For general Nextflow language or engine questions, use the [Nextflow Community Forum](https://community.seqera.io/), as directed by [nf-core's help guidance](https://nf-co.re/join).
+
+Contact Purdue RCAC for account access, allocations, quota, and scheduler policy questions.
+
+## Reference documents
+
+- [Purdue Gautschi institutional profile source](https://github.com/nf-core/configs/blob/master/conf/purdue_gautschi.config): current execution, resource routing, and cache settings.
+- [RCAC: Reproducible Bioinformatics Using Nextflow](https://docs.rcac.purdue.edu/lifesciences/guides/nextflow-gautschi/): compute-node setup and the pinned demo walkthrough.
+- [Join the nf-core community](https://nf-co.re/join): Slack invitation and support guidance.
 
 > **Take-home:** Institutional profile = HPC integration. Custom `-c` = targeted overrides. Apptainer cache and Nextflow work = scratch. Final results = persistent storage.
