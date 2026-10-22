@@ -84,7 +84,6 @@ mkdir -p work apptainer-tmp apptainer-cache
 export NXF_HOME="$PWD/.nxf-home"
 export NXF_WORK="$PWD/work"
 export NXF_APPTAINER_CACHEDIR="$RCAC_SCRATCH/.apptainer/cache"
-export NXF_SINGULARITY_CACHEDIR="$NXF_APPTAINER_CACHEDIR"
 export APPTAINER_CACHEDIR="$PWD/apptainer-cache"
 export APPTAINER_TMPDIR="$PWD/apptainer-tmp"
 mkdir -p "$NXF_APPTAINER_CACHEDIR"
@@ -96,8 +95,7 @@ mkdir -p "$NXF_APPTAINER_CACHEDIR"
 | --- | --- |
 | `NXF_HOME` | Nextflow installation, plugins, and metadata; avoids filling your home quota. |
 | `NXF_WORK` | Hashed task directories and intermediate files used when resuming a run. |
-| `NXF_SINGULARITY_CACHEDIR` | Nextflow-managed container image cache when the `singularity` engine is selected; common in older Purdue examples. |
-| `NXF_APPTAINER_CACHEDIR` | Corresponding Nextflow image cache for the native `apptainer` engine; use for Purdue institutional profiles that enable Apptainer. |
+| `NXF_APPTAINER_CACHEDIR` | Nextflow-managed container image cache for Apptainer. |
 | `APPTAINER_CACHEDIR` | Apptainer's own download/blob cache, separate from Nextflow's image cache. |
 | `APPTAINER_TMPDIR` | Temporary space for pulling and converting images. |
 
