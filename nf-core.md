@@ -118,8 +118,8 @@ Scratch is not backed up. Keep the input sheet, run command, configuration, and 
 
 | Where files go | Direct `nextflow run nf-core/demo` | Download first with the nf-core toolkit |
 | --- | --- | --- |
-| Pipeline code | Under `$NXF_ASSETS`, which defaults to `$NXF_HOME/assets`. With no overrides, the root is `$HOME/.nextflow/assets`. | Under `--outdir`, for example `/depot/YOUR_GROUP/pipelines/nf-core-demo/1.2.0/1_2_0/`. |
-| Container images | Pulled as needed into the configured Apptainer image cache. | Can be included in the download bundle for group reuse. Point Nextflow to that image folder when running. |
+| Pipeline code | Under `$NXF_ASSETS`, which defaults to `$NXF_HOME/assets`. With no overrides, the root is `$HOME/.nextflow/assets`. | Under `--outdir`, for example `/depot/YOUR_GROUP/nfcore/pipelines/nf-core-demo/1.2.0/1_2_0/`. |
+| Container images | Pulled as needed into the configured Apptainer image cache. | All pipelines add images to one shared group folder, such as `/depot/YOUR_GROUP/nfcore/container-images/`, using `amend` mode. |
 | Institutional configs | Normally fetched from nf-core/configs when configuring the run. | Included when requested with `--download-configuration yes`. |
 | How you launch | Use the repository name, such as `nf-core/demo`. | Use the local directory containing `main.nf` and `nextflow.config`. |
 
@@ -133,25 +133,43 @@ Running `nextflow run nf-core/demo` alone does not select an HPC or container pr
 
 ### Download once and share with your group
 
-A group maintainer can prepare the demo in advance using the nf-core toolkit, with Nextflow and Apptainer available:
+**Use one group image folder for all pipelines and releases.** Keep each pipeline release in its own code directory. This follows the central-cache approach in [the nfcore2ood download script](https://github.com/TuftsRT/nfcore2ood/blob/main/download_nfcore_pipeline.sh).
+
+```text
+/depot/YOUR_GROUP/nfcore/
+├── container-images/                   # Images reused by every pipeline
+└── pipelines/
+    ├── nf-core-demo/1.2.0/1_2_0/        # Demo code
+    └── nf-core-rnaseq/3.27.0/3_27_0/    # RNA-seq code
+```
+
+A maintainer prepares the folders and downloads a release using Nextflow, Apptainer, and the nf-core toolkit:
 
 ```bash
+export NXF_APPTAINER_CACHEDIR="/depot/YOUR_GROUP/nfcore/container-images"
+# Compatibility variable read by the nf-core downloader.
+export NXF_SINGULARITY_CACHEDIR="$NXF_APPTAINER_CACHEDIR"
+mkdir -p "$NXF_APPTAINER_CACHEDIR" \
+  /depot/YOUR_GROUP/nfcore/pipelines/nf-core-demo
+
 nf-core pipelines download demo -r 1.2.0 \
-  --outdir /depot/YOUR_GROUP/pipelines/nf-core-demo/1.2.0 \
+  --outdir /depot/YOUR_GROUP/nfcore/pipelines/nf-core-demo/1.2.0 \
   --download-configuration yes \
-  --container-cache-utilisation copy \
+  --container-system singularity \
+  --container-cache-utilisation amend \
   --compress none
 ```
 
-When prompted, choose to download Apptainer-compatible images. The `copy` option includes them in the bundle. Inspect the downloaded folders: code may be in `1_2_0/` or `workflow/`, and the image folder name varies. See the [nf-core download instructions](https://nf-co.re/docs/nf-core-tools/cli/pipelines/download).
+The toolkit uses the compatibility names shown above for Apptainer-compatible downloads. **`amend` adds missing images to the central cache and avoids copying images into the pipeline's folder.** Repeat for other pipelines with the same image folder and a different pipeline name, release, and `--outdir`. Existing matching images can be reused. See the [nf-core downloader documentation](https://nf-co.re/docs/nf-core-tools/cli/pipelines/download).
 
-In your Slurm script, set the actual downloaded image path and run the local code:
+Inspect the downloaded code directory: its name may be `1_2_0/` or `workflow/`, depending on the toolkit version. Use the directory containing `main.nf` and `nextflow.config`.
+
+In each user's Slurm script, point to the shared image folder and the desired pipeline release:
 
 ```bash
-# Replace YOUR_GROUP and IMAGE_FOLDER with your installation's paths.
-export NXF_APPTAINER_CACHEDIR="/depot/YOUR_GROUP/pipelines/nf-core-demo/1.2.0/IMAGE_FOLDER"
+export NXF_APPTAINER_CACHEDIR="/depot/YOUR_GROUP/nfcore/container-images"
 
-nextflow run /depot/YOUR_GROUP/pipelines/nf-core-demo/1.2.0/1_2_0/ \
+nextflow run /depot/YOUR_GROUP/nfcore/pipelines/nf-core-demo/1.2.0/1_2_0/ \
   -profile test,purdue_gautschi \
   -c custom.config --cluster_account YOUR_ACCOUNT \
   --outdir "$PWD/results" -resume
@@ -165,7 +183,7 @@ apptainer.cacheDir = System.getenv('NXF_APPTAINER_CACHEDIR')
 
 Use the Slurm script below as the wrapper, replacing its image-cache export and run command with this example. For RNA-seq or another pipeline, substitute the release, local path, and required inputs; use `test` only for test datasets.
 
-Both modes can reuse the same image cache. The toolkit makes an explicit, shareable installation convenient. Keep group code and images readable from all compute nodes, let a maintainer complete missing images, and give each analysis its own scratch work directory and run history. Apptainer's own `APPTAINER_CACHEDIR` remains per user. Pre-downloading code and images does not also prepare every plugin or reference dataset.
+Both download modes can use this central image cache when configured to point there. Give group members read access to the code and images from all compute nodes, and let maintainers add missing images. Keep each analysis's work directory, run history, and Apptainer's own `APPTAINER_CACHEDIR` in per-user storage. Pipeline releases remain separate while their images are shared. Pre-downloading code and images does not also prepare every plugin or reference dataset.
 
 ## Customize a site profile safely
 
