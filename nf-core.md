@@ -63,43 +63,39 @@ Follow the [RCAC setup instructions](https://docs.rcac.purdue.edu/lifesciences/g
 slist
 sinteractive -A YOUR_ACCOUNT -N 1 -n 2 -p cpu -t 2:00:00
 
-# Once the compute session starts
-module purge
-module load nextflow
+# Continue with the workspace setup once the compute session starts.
 ```
 
 Alternatively, use the batch script below. Keep an interactive allocation alive until Nextflow finishes.
 
-## Control where Nextflow writes
+## Prepare the workspace
 
-Purdue uses Apptainer.
-
-Prepare the workspace before submitting the launch script later in this guide:
+Purdue provides Nextflow and the nf-core toolkit as modules; no manual installation is needed. Load them in your compute session and start from scratch:
 
 ```bash
+module purge
+module load nextflow
+module load nf-core
+
 mkdir -p "$RCAC_SCRATCH/nfcore-workshop"
 cd "$RCAC_SCRATCH/nfcore-workshop"
-mkdir -p work apptainer-tmp apptainer-cache
-
-export NXF_HOME="$PWD/.nxf-home"
-export NXF_WORK="$PWD/work"
-export NXF_APPTAINER_CACHEDIR="$RCAC_SCRATCH/.apptainer/cache"
-export APPTAINER_CACHEDIR="$PWD/apptainer-cache"
-export APPTAINER_TMPDIR="$PWD/apptainer-tmp"
-mkdir -p "$NXF_APPTAINER_CACHEDIR"
 ```
 
-### What does each variable mean?
+Nextflow creates `work/` here automatically. The nf-core toolkit prepares pipeline downloads; Nextflow runs the pipeline.
 
-| Variable | Purpose |
+### Are extra exports necessary?
+
+| Variable | Needed for this setup? |
 | --- | --- |
-| `NXF_HOME` | Nextflow installation, plugins, and metadata; avoids filling your home quota. |
-| `NXF_WORK` | Hashed task directories and intermediate files used when resuming a run. |
-| `NXF_APPTAINER_CACHEDIR` | Nextflow-managed container image cache for Apptainer. |
-| `APPTAINER_CACHEDIR` | Apptainer's own download/blob cache, separate from Nextflow's image cache. |
-| `APPTAINER_TMPDIR` | Temporary space for pulling and converting images. |
+| `NXF_HOME` | No. Normally defaults to `$HOME/.nextflow`, holding user state such as plugins and downloaded pipeline code. Change it only if you want that storage elsewhere. |
+| `NXF_WORK` | No. The default is `./work`, already in scratch because you changed into the scratch workspace. |
+| `APPTAINER_TMPDIR` | No. Apptainer uses `$TMPDIR` or `/tmp` by default. Set it if image downloads or builds need more temporary space. |
 
-> **Gautschi cache:** The [profile](https://github.com/nf-core/configs/blob/master/conf/purdue_gautschi.config) sets `apptainer.cacheDir` to `$RCAC_SCRATCH/.apptainer/cache` (fallback: `$SCRATCH`, then home). The exports match it. To relocate images, override `apptainer.cacheDir` in your custom config; changing only the environment variable may not take effect.
+These settings control storage; loading a module supplies the software. See [Nextflow's environment settings](https://docs.seqera.io/nextflow/reference/env-vars) and [Apptainer's temporary directory settings](https://apptainer.org/docs/user/latest/build_env.html#temporary-folders).
+
+For group image sharing, set only `NXF_APPTAINER_CACHEDIR` to the shared image folder, as shown below. Apptainer's separate `APPTAINER_CACHEDIR` is also optional; redirect it to per-user scratch if its default home-directory cache causes quota problems.
+
+> **Gautschi cache:** The [profile](https://github.com/nf-core/configs/blob/master/conf/purdue_gautschi.config) defines `apptainer.cacheDir`. To use your chosen shared image folder, keep the one-line `apptainer.cacheDir` override shown below in `custom.config`.
 
 ### Where data should live
 
@@ -123,7 +119,7 @@ Scratch is not backed up. Keep the input sheet, run command, configuration, and 
 | Institutional configs | Normally fetched from nf-core/configs when configuring the run. | Included when requested with `--download-configuration yes`. |
 | How you launch | Use the repository name, such as `nf-core/demo`. | Use the local directory containing `main.nf` and `nextflow.config`. |
 
-For pipeline-code locations, see [Nextflow's environment settings](https://docs.seqera.io/nextflow/reference/env-vars#nxf_assets). With this guide's `NXF_HOME="$PWD/.nxf-home"`, the asset root is `$PWD/.nxf-home/assets`, unless you set `NXF_ASSETS` separately.
+With the default `NXF_HOME`, directly fetched pipeline code goes under `$HOME/.nextflow/assets`. A module or your own `NXF_HOME` / `NXF_ASSETS` setting can change this location. See [Nextflow's environment settings](https://docs.seqera.io/nextflow/reference/env-vars#nxf_assets).
 
 ### Where images go during a direct run
 
@@ -146,6 +142,9 @@ Running `nextflow run nf-core/demo` alone does not select an HPC or container pr
 A maintainer prepares the folders and downloads a release using Nextflow, Apptainer, and a current nf-core toolkit with native `--container-system apptainer` support ([verified in tools 4.2.0](https://github.com/nf-core/tools/blob/4.2.0/nf_core/__main__.py#L341-L345)):
 
 ```bash
+module load nextflow
+module load nf-core
+
 export NXF_APPTAINER_CACHEDIR="/depot/YOUR_GROUP/nfcore/container-images"
 mkdir -p "$NXF_APPTAINER_CACHEDIR" \
   /depot/YOUR_GROUP/nfcore/pipelines/nf-core-demo
@@ -297,13 +296,8 @@ set -euo pipefail
 module purge
 module load nextflow
 cd "$RCAC_SCRATCH/nfcore-workshop"
-export NXF_HOME="$PWD/.nxf-home"
-export NXF_WORK="$PWD/work"
 export NXF_APPTAINER_CACHEDIR="$RCAC_SCRATCH/.apptainer/cache"
-export APPTAINER_CACHEDIR="$PWD/apptainer-cache"
-export APPTAINER_TMPDIR="$PWD/apptainer-tmp"
-mkdir -p "$NXF_APPTAINER_CACHEDIR" \
-  "$APPTAINER_CACHEDIR" "$APPTAINER_TMPDIR"
+mkdir -p "$NXF_APPTAINER_CACHEDIR"
 
 nextflow run nf-core/demo -r 1.2.0 -profile test,purdue_gautschi \
   -c custom.config --cluster_account YOUR_ACCOUNT \
