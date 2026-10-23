@@ -42,7 +42,7 @@ Open the [nf-core/rnaseq GitHub repository](https://github.com/nf-core/rnaseq). 
 
 **“Local” means local to the pipeline project.** Both types of module can run on HPC with containers. A module defines a step's inputs, command, outputs, and resource label.
 
-On GitHub, use the branch/tag dropdown to select the release matching your `-r` option. The STAR example below links to `master`; file locations and settings can differ between releases.
+On GitHub, use the branch/tag dropdown to select the release matching your `-r` option. The rnaseq examples below use `3.27.0`; file locations and settings can differ between releases.
 
 For this workshop, we will use **nf-core/demo** with a small test dataset.
 
@@ -223,7 +223,7 @@ The institutional profile handles cluster settings. The pipeline supplies CPU, m
 
 ### Example: find STAR_ALIGN's default resources
 
-First, open [`modules/nf-core/star/align/main.nf`](https://github.com/nf-core/rnaseq/blob/master/modules/nf-core/star/align/main.nf). Near the top, find the process name and label:
+First, open [`modules/nf-core/star/align/main.nf`](https://github.com/nf-core/rnaseq/blob/3.27.0/modules/nf-core/star/align/main.nf). Near the top, find the process name and label:
 
 ```groovy
 process STAR_ALIGN {
@@ -232,7 +232,7 @@ process STAR_ALIGN {
 }
 ```
 
-Next, open [`conf/base.config`](https://github.com/nf-core/rnaseq/blob/master/conf/base.config) and search for `process_high`:
+Next, open [`conf/base.config`](https://github.com/nf-core/rnaseq/blob/3.27.0/conf/base.config) and search for `process_high`:
 
 ```groovy
 withLabel: process_high {
@@ -244,7 +244,7 @@ withLabel: process_high {
 
 On the first attempt, STAR requests **12 CPUs, 72 GB, and 16 hours**, before other overrides or resource caps. `task.attempt` starts at 1 and increases on a retry.
 
-Follow this same path for other steps: **process definition → label → settings in `conf/base.config`**. STAR's alignment arguments are configured separately in [`conf/modules/align_star.config`](https://github.com/nf-core/rnaseq/blob/master/conf/modules/align_star.config).
+Follow this same path for other steps: **process definition → label → settings in `conf/base.config`**. STAR's alignment arguments are configured separately in [`conf/modules/align_star.config`](https://github.com/nf-core/rnaseq/blob/3.27.0/conf/modules/align_star.config).
 
 ### Override by label or process name
 
@@ -281,7 +281,7 @@ The fixed requests above stay the same on retries. To increase a request on retr
 
 ## 6. Prepare inputs for a real analysis
 
-The demo's `test` profile supplies its inputs. For your own analysis, you prepare those files yourself. Here is a **paired-end nf-core/rnaseq example using release 3.26.0**. Replace the example paths with your files; see the [rnaseq input guide](https://nf-co.re/rnaseq/3.26.0/docs/usage/#samplesheet-input).
+The demo's `test` profile supplies its inputs. For your own analysis, you prepare those files yourself. Here is a **paired-end nf-core/rnaseq example using release 3.27.0**. Replace the example paths with your files; see the [rnaseq input guide](https://nf-co.re/rnaseq/3.27.0/docs/usage/#samplesheet-input).
 
 ### Prepare the reads and samplesheet
 
@@ -300,13 +300,13 @@ treated_rep1,/depot/YOUR_GROUP/rnaseq_project/fastq/treated_rep1_R1.fastq.gz,/de
 | `fastq_2` | Absolute path to its matching R2 file; leave empty for single-end reads |
 | `strandedness` | `forward`, `reverse`, or `unstranded` if known from library preparation; `auto` asks the pipeline to infer it |
 
-Keep the header exactly as shown and check that every read file exists and is readable from compute nodes. The [samplesheet schema](https://github.com/nf-core/rnaseq/blob/3.26.0/assets/schema_input.json) defines the accepted values.
+Keep the header exactly as shown and check that every read file exists and is readable from compute nodes. The [samplesheet schema](https://github.com/nf-core/rnaseq/blob/3.27.0/assets/schema_input.json) defines the accepted values.
 
 ### Prepare the reference files
 
 For this STAR/Salmon example, provide a **genome FASTA** and a **gene annotation GTF** for your organism. Obtain them for the same genome assembly and preferably from the same source and release, such as Ensembl or GENCODE.
 
-For example, store them as `references/genome.fa.gz` and `references/genes.gtf.gz` under your project directory. These names are placeholders for your actual reference files. The pipeline can build the required index from them. See the [reference requirements](https://nf-co.re/rnaseq/3.26.0/docs/usage/#reference-genome-options).
+For example, store them as `references/genome.fa.gz` and `references/genes.gtf.gz` under your project directory. These names are placeholders for your actual reference files. The pipeline can build the required index from them. See the [reference requirements](https://nf-co.re/rnaseq/3.27.0/docs/usage/#reference-genome-options).
 
 ### Pass your inputs to the pipeline
 
@@ -319,7 +319,7 @@ Save this as `run_rnaseq.sh`. Replace `YOUR_ACCOUNT` and `YOUR_GROUP`, and adjus
 #SBATCH --partition=cpu
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=4
+#SBATCH --cpus-per-task=16
 #SBATCH --time=2-00:00:00
 #SBATCH --output=rnaseq-%j.out
 
@@ -331,7 +331,7 @@ PROJECT_DIR="/depot/YOUR_GROUP/rnaseq_project"
 mkdir -p "$RCAC_SCRATCH/rnaseq-project"
 cd "$RCAC_SCRATCH/rnaseq-project"
 
-nextflow run nf-core/rnaseq -r 3.26.0 \
+nextflow run nf-core/rnaseq -r 3.27.0 \
   -profile purdue_gautschi \
   --cluster_account "$SLURM_JOB_ACCOUNT" \
   --input "$PROJECT_DIR/samplesheet.csv" \
@@ -342,7 +342,9 @@ nextflow run nf-core/rnaseq -r 3.26.0 \
   -resume -ansi-log false
 ```
 
-Submit with `sbatch run_rnaseq.sh`. `--input` points to the samplesheet; `--fasta` and `--gtf` supply the references. `star_salmon` selects STAR alignment and Salmon quantification. The Gautschi profile supplies the container cache location and submits separate task jobs, so the 4 cores above are for the Nextflow manager.
+Submit with `sbatch run_rnaseq.sh`. `--input` points to the samplesheet; `--fasta` and `--gtf` supply the references. `star_salmon` selects STAR alignment and Salmon quantification. The Gautschi profile supplies the container cache location and submits separate task jobs.
+
+**Choose appropriate cores for your needs.** The 16 cores above are an example allocation for the Nextflow manager. With `purdue_gautschi`, each analysis step has a separate resource request; use the pipeline defaults or `custom.config` to adjust its cores and memory based on genome size, read depth, and tool requirements. Increasing the manager's cores does not increase STAR's cores. With the `apptainer` profile alone, request enough cores and bundled memory for the whole analysis within one job.
 
 To use your resource overrides from the previous section, place `custom.config` in `$RCAC_SCRATCH/rnaseq-project` and add `-c custom.config` to the run command. Copy final results from scratch to persistent project storage after completion.
 

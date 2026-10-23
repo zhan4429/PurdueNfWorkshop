@@ -65,7 +65,13 @@
   article.querySelectorAll('pre').forEach(pre => {
     const code = pre.querySelector('code');
     if (!code) return;
-    const wrapper = pre.closest('.highlighter-rouge') || pre.parentElement;
+    let wrapper = pre.closest('.highlighter-rouge');
+    if (!wrapper) {
+      wrapper = document.createElement('div');
+      wrapper.className = 'highlighter-rouge';
+      pre.before(wrapper);
+      wrapper.append(pre);
+    }
     const classText = wrapper.className + ' ' + code.className;
     const language = (classText.match(/language-([\w-]+)/) || [null, 'code'])[1];
     const toolbar = document.createElement('div');
