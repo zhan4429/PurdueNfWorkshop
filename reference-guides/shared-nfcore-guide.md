@@ -84,7 +84,7 @@ apptainer.cacheDir = System.getenv('NXF_APPTAINER_CACHEDIR')
 
 **This line is important on Gautschi:** its institutional profile defines `apptainer.cacheDir` explicitly. The override makes your script's chosen location take effect. See the [Gautschi profile](https://github.com/nf-core/configs/blob/master/conf/purdue_gautschi.config) and [Nextflow's Apptainer configuration](https://docs.seqera.io/nextflow/reference/config/apptainer#apptainercachedir).
 
-Add any project-specific `withLabel` or `withName` resource overrides to this same file. For examples, see the [workshop guide's resource section](https://zhan4429.github.io/PurdueNfWorkshop/nf-core/#customize-a-site-profile-safely). Keep your overrides in your run directory rather than editing the shared pipeline.
+Add any project-specific `withLabel` or `withName` resource overrides to this same file. For examples, see the [workshop guide's resource section](https://zhan4429.github.io/PurdueNfWorkshop/nf-core/#5-override-pipeline-resource-settings). Keep your overrides in your run directory rather than editing the shared pipeline.
 
 ## 5. Set the image path in your Slurm script
 

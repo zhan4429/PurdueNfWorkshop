@@ -8,9 +8,9 @@ permalink: /nf-core/
 
 In [Nextflow fundamentals]({{ '/' | relative_url }}), you connected processes and channels yourself. **nf-core provides ready-made pipelines built using Nextflow.** You choose a pipeline, provide your inputs, and let Nextflow run the analysis.
 
-This **30–40 minute workshop** covers choosing a pipeline, running a small demo on Gautschi, checking results, and making a simple resource change. Downloading images and waiting for Slurm may take additional time.
+This workshop covers choosing a pipeline, running a small demo on Gautschi, checking results, and adjusting process resources.
 
-## 1. Understand the main components · 5 minutes
+## 1. Understand the main components
 
 | Component | What it does |
 | --- | --- |
@@ -24,9 +24,29 @@ Choose a pipeline for your research question at [nf-co.re/pipelines](https://nf-
 
 For example, **nf-core/rnaseq** performs RNA-seq quality control, trimming, alignment, and expression quantification. Your organism, reference genome, and analysis goals guide the parameter choices.
 
+### Find your way around a pipeline repository
+
+Open the [nf-core/rnaseq GitHub repository](https://github.com/nf-core/rnaseq). These are the main places to look when you want to understand or customize a pipeline:
+
+| File or folder | What it is used for |
+| --- | --- |
+| `README.md` and `docs/` | Overview, input requirements, usage, and output descriptions |
+| `main.nf` | Entry point that starts the workflow |
+| `nextflow.config` | Default parameters, profiles, and links to other configuration files |
+| `nextflow_schema.json` | Descriptions and validation rules for pipeline parameters |
+| `conf/base.config` | Default CPU, memory, and time requests, grouped by process label |
+| `conf/modules/` | Settings for particular steps, such as STAR arguments and output locations |
+| `workflows/` and `subworkflows/` | Connect analysis steps; subworkflows group related steps, such as alignment and BAM processing |
+| `modules/nf-core/` | Reusable tool modules imported from the shared nf-core collection, such as STAR and FastQC |
+| `modules/local/` | Modules written for this pipeline's particular needs, such as rnaseq's DESeq2 QC step |
+
+**“Local” means local to the pipeline project.** Both types of module can run on HPC with containers. A module defines a step's inputs, command, outputs, and resource label.
+
+On GitHub, use the branch/tag dropdown to select the release matching your `-r` option. The STAR example below links to `master`; file locations and settings can differ between releases.
+
 For this workshop, we will use **nf-core/demo** with a small test dataset.
 
-## 2. Prepare your workspace · 5 minutes
+## 2. Prepare your workspace
 
 On the Gautschi login node, find your allocation account:
 
@@ -42,6 +62,29 @@ cd "$RCAC_SCRATCH/nfcore-workshop"
 ```
 
 We will submit Nextflow through Slurm so it runs on a compute node. Keep temporary task files in scratch and copy important results to persistent storage after the run. **Scratch is not backed up.**
+
+### Set one container image folder for all pipelines
+
+The `purdue_gautschi` profile already uses `$RCAC_SCRATCH/.apptainer/cache`. With the `test,apptainer` profile shown below, **set `NXF_APPTAINER_CACHEDIR` explicitly** to use the same location:
+
+```bash
+export NXF_APPTAINER_CACHEDIR="$RCAC_SCRATCH/.apptainer/cache"
+mkdir -p "$NXF_APPTAINER_CACHEDIR"
+```
+
+The export is optional with the [Gautschi institutional profile](https://nf-co.re/configs/purdue_gautschi/). Using the same folder across pipelines lets Nextflow reuse matching images. Different software versions may need different images. If the scratch cache is deleted, the images will be downloaded again when needed.
+
+### Where does the pipeline code go?
+
+`nextflow run nf-core/demo -r 1.2.0` downloads the pipeline code automatically. By default, it is stored in **`$HOME/.nextflow/assets/nf-core/demo/`**, separate from your analysis files and container images. Nextflow reuses this copy and selects the release specified by `-r`.
+
+| Contents | Location in this workshop |
+| --- | --- |
+| Pipeline code | `$HOME/.nextflow/assets/nf-core/demo/` |
+| Container images for all pipelines | `$RCAC_SCRATCH/.apptainer/cache/` |
+| Task files and final outputs | `work/` and `results/` in your scratch workspace |
+
+If your environment sets `NXF_HOME` or `NXF_ASSETS`, the pipeline code location may differ.
 
 ### Read a launch command
 
@@ -63,17 +106,19 @@ nextflow run nf-core/demo -r 1.2.0 \
 
 Use `test` for the example dataset. For your own analysis, remove `test` and supply the pipeline's required inputs. On Bell or Negishi, use the matching institutional profile and Slurm partition.
 
-## 3. Submit the demo · 10 minutes
+## 3. Submit the demo
 
-Save the following as `run_demo.sh` in your workspace. Replace **both** occurrences of `YOUR_ACCOUNT`.
+### Use the Gautschi profile
+
+Save the following as `run_demo.sh` in your workspace. Replace **both** occurrences of `YOUR_ACCOUNT`. Repeat the cache export in the script so it is set whenever the job runs.
 
 ```bash
 #!/bin/bash
 #SBATCH --job-name=nfcore-demo
 #SBATCH --account=YOUR_ACCOUNT
 #SBATCH --partition=cpu
-#SBATCH --cpus-per-task=2
-#SBATCH --mem=8G
+#SBATCH --nodes=1
+#SBATCH --cpus-per-task=4
 #SBATCH --time=04:00:00
 #SBATCH --output=nfcore-%j.out
 
@@ -81,6 +126,9 @@ set -euo pipefail
 module purge
 module load nextflow
 cd "$RCAC_SCRATCH/nfcore-workshop"
+
+export NXF_APPTAINER_CACHEDIR="$RCAC_SCRATCH/.apptainer/cache"
+mkdir -p "$NXF_APPTAINER_CACHEDIR"
 
 nextflow run nf-core/demo -r 1.2.0 \
   -profile test,purdue_gautschi \
@@ -96,11 +144,55 @@ sbatch run_demo.sh
 squeue -u "$USER"
 ```
 
-The script starts the **Nextflow manager** with 2 CPUs and 8 GB of memory. Nextflow submits separate Slurm jobs for the pipeline tasks, each with its own resource request. The manager must remain running until the pipeline finishes.
+The script starts the **Nextflow manager** with 4 CPUs. Nextflow submits separate Slurm jobs for the pipeline tasks, each with its own resource request. The manager must remain running until the pipeline finishes.
 
-`nextflow run` downloads the pipeline code and required container images automatically. You do not need the nf-core toolkit. The Gautschi profile stores images in `$RCAC_SCRATCH/.apptainer/cache`, where later runs can reuse them. No extra cache settings are needed for this demo.
+The first run may take longer while Nextflow downloads the pipeline and containers. Later runs can reuse these downloads.
 
-## 4. Check results and resume · 5 minutes
+### Alternative: run with `test,apptainer`
+
+The `apptainer` profile enables containers. This script runs the whole demo within **one Slurm job with 4 CPU cores**. Memory is allocated with the cores on Gautschi. The Gautschi profile example above submits separate jobs for the pipeline tasks.
+
+Save this as `run_demo_apptainer.sh` in your workspace and replace `YOUR_ACCOUNT`:
+
+```bash
+#!/bin/bash
+#SBATCH --job-name=nfcore-demo-apptainer
+#SBATCH --account=YOUR_ACCOUNT
+#SBATCH --partition=cpu
+#SBATCH --nodes=1
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=4
+#SBATCH --time=02:00:00
+#SBATCH --output=nfcore-%j.out
+
+set -euo pipefail
+module purge
+module load nextflow
+
+mkdir -p "$RCAC_SCRATCH/nfcore-workshop/apptainer-demo"
+cd "$RCAC_SCRATCH/nfcore-workshop/apptainer-demo"
+
+export NXF_APPTAINER_CACHEDIR="$RCAC_SCRATCH/.apptainer/cache"
+mkdir -p "$NXF_APPTAINER_CACHEDIR"
+
+nextflow run nf-core/demo -r 1.2.0 \
+  -profile test,apptainer \
+  --outdir "$PWD/results" \
+  -resume -ansi-log false
+```
+
+Submit from your workspace:
+
+```bash
+sbatch run_demo_apptainer.sh
+squeue -u "$USER"
+```
+
+This example uses the same image cache as the Gautschi profile. It does not need `--cluster_account` because `#SBATCH --account` sets the account for this single job. Its results and task files are in the `apptainer-demo` subfolder. See the [demo profile definitions](https://github.com/nf-core/demo/blob/1.2.0/nextflow.config) for these settings.
+
+**For real analyses, request more cores as needed.** Four cores are for this small test dataset. With `test,apptainer`, all tasks share the one job's allocation. Heavier analyses need enough cores and the associated memory for the most demanding task and any tasks running at the same time. For your own data, also remove `test` and provide the pipeline's required inputs.
+
+## 4. Check results and resume
 
 In your workspace, look for:
 
@@ -113,48 +205,79 @@ In your workspace, look for:
 
 Open the MultiQC HTML report under `results/` to review the quality-control results.
 
-The script already includes `-resume`. Once the previous run has stopped, submit it again:
+Both scripts include `-resume`. Once the previous run has stopped, resubmit the same script you used:
 
 ```bash
 sbatch run_demo.sh
+# Or, if you used the Apptainer-only example:
+sbatch run_demo_apptainer.sh
 ```
 
 Nextflow reuses unchanged, successfully completed tasks. **Keep the same run directory, `.nextflow/`, and `work/` to resume.**
 
 If a task fails, start with the error in `nfcore-<job-id>.out`. It usually identifies the failed process and its work directory. Check that task's `.command.err` and `.command.log` for the tool's error message.
 
-## Customize a site profile safely
+## 5. Override pipeline resource settings
 
-Spend the final **5–10 minutes** on this example if time allows.
+The institutional profile handles cluster settings. The pipeline supplies CPU, memory, and time requests for its analysis steps. If a task runs out of memory or time, find its defaults and override them in your own `custom.config`.
 
-The institutional profile handles cluster settings. The pipeline supplies CPU, memory, and time requests for its analysis steps. For example, [rnaseq's `conf/base.config`](https://github.com/nf-core/rnaseq/blob/master/conf/base.config) defines resource groups such as `process_low`, `process_medium`, and `process_high`.
+### Example: find STAR_ALIGN's default resources
 
-If one step needs more memory, use your own `custom.config` rather than editing the pipeline. For example, for an **rnaseq STAR alignment task**:
+First, open [`modules/nf-core/star/align/main.nf`](https://github.com/nf-core/rnaseq/blob/master/modules/nf-core/star/align/main.nf). Near the top, find the process name and label:
+
+```groovy
+process STAR_ALIGN {
+    label 'process_high'
+    // ...
+}
+```
+
+Next, open [`conf/base.config`](https://github.com/nf-core/rnaseq/blob/master/conf/base.config) and search for `process_high`:
+
+```groovy
+withLabel: process_high {
+    cpus   = { 12    * task.attempt }
+    memory = { 72.GB * task.attempt }
+    time   = { 16.h  * task.attempt }
+}
+```
+
+On the first attempt, STAR requests **12 CPUs, 72 GB, and 16 hours**, before other overrides or resource caps. `task.attempt` starts at 1 and increases on a retry.
+
+Follow this same path for other steps: **process definition → label → settings in `conf/base.config`**. STAR's alignment arguments are configured separately in [`conf/modules/align_star.config`](https://github.com/nf-core/rnaseq/blob/master/conf/modules/align_star.config).
+
+### Override by label or process name
+
+Save the following as `custom.config` in your **rnaseq run directory**. It shows both options; keep the block you need:
 
 ```groovy
 process {
-  withName: 'STAR_ALIGN' {
+  // Change every process with the process_high label.
+  withLabel: 'process_high' {
     cpus   = 16
-    memory = 64.GB
-    time   = 12.h
+    memory = 96.GB
+    time   = 24.h
+  }
+
+  // Change only STAR_ALIGN within the ALIGN_STAR workflow.
+  withName: '.*ALIGN_STAR:STAR_ALIGN' {
+    cpus   = 24
+    memory = 128.GB
+    time   = 24.h
   }
 }
 ```
 
-This requests resources for each matching task. **It is an rnaseq example, not a setting needed for the demo.** Copy the process name from your run's error message and choose resources appropriate for your data.
+| Selector | Effect of this example |
+| --- | --- |
+| `withLabel` | Every `process_high` task requests 16 CPUs, 96 GB, and 24 hours |
+| `withName` | STAR alignment tasks request 24 CPUs, 128 GB, and 24 hours |
 
-Add the file to your usual launch command with:
+If you keep both blocks, the `withName` settings take priority for STAR. The `.*` matches the earlier part of the workflow path. For another step, copy its full process name from the run's error message or `.nextflow.log`.
 
-```bash
--c custom.config
-```
+**These are example requests for rnaseq, not settings needed for the demo.** Choose resources that fit your analysis and cluster limits. In your rnaseq Slurm script, add **`-c custom.config`** to the `nextflow run` command to apply the overrides. Keep the pipeline files unchanged.
 
-Two selectors are useful:
-
-- `withName` changes a particular process.
-- `withLabel` changes all processes with a resource label, such as `process_high`.
-
-Some pipelines increase resources when retrying a failed task. `maxRetries = 1` allows **one retry after the first attempt**. An expression such as `memory = { 32.GB * task.attempt }` requests 32 GB initially and 64 GB on the retry, subject to resource caps. Retry behavior depends on the pipeline's configuration and the failure type.
+The fixed requests above stay the same on retries. To increase a request on retry, use an expression such as `memory = { 128.GB * task.attempt }`. `maxRetries = 1` allows one retry after the first attempt, when the pipeline's error policy permits it.
 
 ## After the workshop
 
