@@ -29,7 +29,7 @@ There are two types of profiles to distinguish:
 
 ```bash
 # Container-only profile: NOT a complete HPC configuration
-nextflow run nf-core/demo -r 1.2.0 -profile test,apptainer
+nextflow run nf-core/demo -r 1.2.0 -profile test,apptainer --outdir results
 
 # Gautschi profile: Slurm + Apptainer + site policies
 nextflow run nf-core/demo -r 1.2.0 -profile test,purdue_gautschi \
@@ -91,11 +91,7 @@ Nextflow creates `work/` here automatically. The nf-core toolkit prepares pipeli
 | `NXF_WORK` | No. The default is `./work`, already in scratch because you changed into the scratch workspace. |
 | `APPTAINER_TMPDIR` | No. Apptainer uses `$TMPDIR` or `/tmp` by default. Set it if image downloads or builds need more temporary space. |
 
-These settings control storage; loading a module supplies the software. See [Nextflow's environment settings](https://docs.seqera.io/nextflow/reference/env-vars) and [Apptainer's temporary directory settings](https://apptainer.org/docs/user/latest/build_env.html#temporary-folders).
-
-For group image sharing, set only `NXF_APPTAINER_CACHEDIR` to the shared image folder, as shown below. Apptainer's separate `APPTAINER_CACHEDIR` is also optional; redirect it to per-user scratch if its default home-directory cache causes quota problems.
-
-> **Gautschi cache:** The [profile](https://github.com/nf-core/configs/blob/master/conf/purdue_gautschi.config) defines `apptainer.cacheDir`. To use your chosen shared image folder, keep the one-line `apptainer.cacheDir` override shown below in `custom.config`.
+For group image sharing, set only `NXF_APPTAINER_CACHEDIR` to the shared image folder, as shown below. 
 
 ### Where data should live
 
@@ -123,7 +119,7 @@ With the default `NXF_HOME`, directly fetched pipeline code goes under `$HOME/.n
 
 ### Where images go during a direct run
 
-With `-profile test,purdue_gautschi`, the [Gautschi profile](https://github.com/nf-core/configs/blob/master/conf/purdue_gautschi.config) stores images in `$RCAC_SCRATCH/.apptainer/cache`. Without an explicit image-cache setting or environment override, Nextflow's native Apptainer default is an `apptainer/` folder under the work directory, usually `work/apptainer/`. Images are reused on later runs. See [Nextflow's Apptainer image handling](https://docs.seqera.io/nextflow/container/apptainer#apptainer-and-docker-hub).
+With `-profile test,purdue_gautschi`, the [Gautschi profile](https://github.com/nf-core/configs/blob/master/conf/purdue_gautschi.config) stores images in `$RCAC_SCRATCH/.apptainer/cache`. Without an explicit image-cache setting or environment override, Nextflow's native Apptainer default is an `singularity/` folder under the work directory, usually `work/singularity/`. Images are reused on later runs. See [Nextflow's Apptainer image handling](https://docs.seqera.io/nextflow/container/apptainer#apptainer-and-docker-hub).
 
 Running `nextflow run nf-core/demo` alone does not select an HPC or container profile. Use the full profiled command above on Purdue.
 

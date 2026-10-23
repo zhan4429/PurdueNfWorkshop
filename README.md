@@ -3,7 +3,8 @@
 Compare a Bash loop with a Nextflow workflow: **fastp → FastQC → MultiQC**.
 The scripts use Slurm and the `biocontainers` and `nextflow` modules.
 Input/output parameters and task resources are defined in `main.nf`.
-`nextflow.config` loads and exports RCAC's tool functions for task shells;
+`nextflow.config` loads and exports RCAC's tool functions for task shells and
+copies task inputs into each work directory so the containers can read them;
 `hpc.config` adds Slurm scheduling settings. Nextflow reads `nextflow.config`
 automatically for both routes; only the Slurm launcher adds `-c hpc.config`.
 Keep both configuration files beside `main.nf`.
@@ -68,6 +69,27 @@ The outputs are not synchronized paired-end reads.
 
 Run the examples on compute nodes through `sbatch`. Save important results to
 persistent storage before scratch cleanup.
+
+## Troubleshooting input files
+
+If fastp reports `ERROR: Failed to open file: SRR6357071_1.fastq.gz`, the tool
+started but could not read its staged input. Nextflow normally stages inputs
+as symlinks; RCAC's container wrappers may not expose the paths those links
+point to. The shared `nextflow.config` uses `process.stageInMode = 'copy'` for
+all three processes, including downstream inputs to FastQC and MultiQC.
+This uses extra work-directory space for the small workshop dataset.
+
+Ensure that setting is present in your cluster checkout, then resubmit
+`qc_nextflow_local.sh` with your usual account and partition. Its `-resume`
+reuses eligible completed tasks and reruns failed tasks. Keep `.nextflow/`
+and `work/`. The Nextflow update notice is informational.
+
+If the error persists, check the source with
+`ls -l data/SRR6357071_1.fastq.gz` and `gzip -t data/SRR6357071_1.fastq.gz`
+from the repository directory. Inspect the failed task directory reported
+by Nextflow: `.command.run` shows staging commands, and `ls -l` shows whether
+the input is a regular file or a symlink. Use a compute allocation to check
+that the QC tool can read that file in its container.
 
 [Printable field guide](https://zhan4429.github.io/PurdueNfWorkshop/field-guide.html)
 uses the same lesson and scripts as the website. Choose **Print / Save as PDF**

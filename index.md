@@ -88,7 +88,7 @@ The same three steps become three processes in [main.nf]({{ '/main.nf' | relativ
 
 | File | Purpose | Used by |
 | --- | --- | --- |
-| `nextflow.config` | Prepare the task environment: purge modules, load the QC tools, and export their Bash functions | Both local and Slurm routes; loaded automatically |
+| `nextflow.config` | Prepare the task environment and copy inputs: purge modules, load the QC tools, export their Bash functions, and stage readable files in each task folder | Both local and Slurm routes; loaded automatically |
 | `hpc.config` | Select the Slurm executor, task partition, and account | Slurm route only; added with `-c hpc.config` |
 
 Keep both files beside `main.nf`. The local launcher uses `nextflow.config` alone; the Slurm launcher uses both. Input/output parameters and task resources remain in `main.nf`.
@@ -106,6 +106,8 @@ RCAC's biocontainer modules provide `fastp`, `fastqc`, and `multiqc` as Bash fun
 `module --force purge` removes conflicting modules; `module load` defines the tool functions; `export -f` passes them to the child Bash shell that executes the task. All task module loading is handled in `nextflow.config`; `main.nf` defines the workflow and its task resources.
 
 `process.beforeScript` resets and loads the tool modules, then exports their functions before each task command runs. This setup applies to both executors. Keep `nextflow.config` beside `main.nf`; `-c hpc.config` adds Slurm scheduling settings without replacing it. Without this task setup, the tools may fail with exit code `127` (command not found).
+
+`process.stageInMode = 'copy'` copies each input into its task folder. Nextflow's default is to create symlinks, but RCAC's tool functions launch containers themselves, and a container may not see a symlink's target. Copying inputs avoids that dependency for fastp, FastQC, and MultiQC. It uses extra work-directory space, which is small for this workshop dataset. This setting controls **task inputs**; `publishDir` controls how **outputs** are published.
 
 ### The complete workflow
 
@@ -287,6 +289,17 @@ Read the Slurm output file in the working directory and the `.nextflow.log` file
 | `.exitcode` | The task's exit status |
 
 For exit code `127` from a QC tool, check that `nextflow.config` is present and its module-load/export commands succeeded. For a missing module, check `module avail` or `module spider`. For rejected Slurm jobs, check the account passed to `sbatch -A` and the partition in `hpc.config`. Debug tool commands inside an interactive compute allocation.
+
+If fastp exits with `255` and `ERROR: Failed to open file`, it started but could not read the input. Check that `process.stageInMode = 'copy'` is present in the cluster's `nextflow.config`, then resubmit the launcher. This avoids staged symlinks whose targets may be hidden inside the tool's container. Keep `.nextflow/` and `work/` for `-resume`; failed tasks will be rerun. The Nextflow update notice is informational.
+
+If the error persists, check the source file from the repository directory:
+
+```bash
+ls -l data/SRR6357071_1.fastq.gz
+gzip -t data/SRR6357071_1.fastq.gz
+```
+
+In the failed task folder, inspect `.command.run` for the staging commands and use `ls -l` to check that the input is a regular file. If it is readable on the host but the QC tool still cannot read it, check the container's mounts and permissions inside a compute allocation. Copy staging also applies to FastQC and MultiQC inputs, so their containers can read files produced by earlier tasks.
 
 ### One dash or two?
 
