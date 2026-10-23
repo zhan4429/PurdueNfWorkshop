@@ -125,7 +125,7 @@ Running `nextflow run nf-core/demo` alone does not select an HPC or container pr
 
 ### Download once and share with your group
 
-**Use one group image folder for all pipelines and releases.** Keep each pipeline release in its own code directory. This follows the central-cache approach in [the nfcore2ood download script](https://github.com/TuftsRT/nfcore2ood/blob/main/download_nfcore_pipeline.sh).
+**Use one group image folder for all pipelines and releases.** Keep each pipeline release in its own code directory. 
 
 ```text
 /depot/YOUR_GROUP/nfcore/
@@ -134,8 +134,6 @@ Running `nextflow run nf-core/demo` alone does not select an HPC or container pr
     ├── nf-core-demo/1.2.0/1_2_0/        # Demo code
     └── nf-core-rnaseq/3.27.0/3_27_0/    # RNA-seq code
 ```
-
-A maintainer prepares the folders and downloads a release using Nextflow, Apptainer, and a current nf-core toolkit with native `--container-system apptainer` support ([verified in tools 4.2.0](https://github.com/nf-core/tools/blob/4.2.0/nf_core/__main__.py#L341-L345)):
 
 ```bash
 module load nextflow
