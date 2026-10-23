@@ -6,26 +6,24 @@ subtitle: From Nextflow concepts to reproducible, community-maintained bioinform
 permalink: /nf-core/
 ---
 
-## What changes after Workshop 1?
-
 In [Nextflow fundamentals]({{ '/' | relative_url }}), you connected processes and channels yourself. **nf-core supplies ready-made, versioned pipelines.** Institutional profiles connect those pipelines to Purdue Slurm and Apptainer.
 
-| Component | Role |
-| --- | --- |
-| **Nextflow** | The engine that runs processes and channels |
-| **nf-core** | Community-maintained bioinformatics pipelines |
-| **Profiles** | Settings that connect a pipeline to your HPC system |
-| **Slurm** | Schedules the pipeline's tasks |
-| **Apptainer** | Provides the software in containers |
+| Component     | Role                                                |
+| ------------- | --------------------------------------------------- |
+| **Nextflow**  | The engine that runs processes and channels         |
+| **nf-core**   | Community-maintained bioinformatics pipelines       |
+| **Profiles**  | Settings that connect a pipeline to your HPC system |
+| **Slurm**     | Schedules the pipeline's tasks                      |
+| **Apptainer** | Provides the software in containers                 |
 
 ## Choose the right profile
 
 There are two types of profiles to distinguish:
 
-| Profile | What it configures |
-| --- | --- |
-| `-profile apptainer` | Container execution only, when the pipeline provides this profile. It does not configure Slurm accounts, partitions, or resource routing. |
-| `-profile purdue_...` | Institutional settings for Slurm execution, Apptainer, and HPC resource policies. Prefer the profile matching your Purdue system. |
+| Profile               | What it configures                                                                                                                        |
+| --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| `-profile apptainer`  | Container execution only, when the pipeline provides this profile. It does not configure Slurm accounts, partitions, or resource routing. |
+| `-profile purdue_...` | Institutional settings for Slurm execution, Apptainer, and HPC resource policies. Prefer the profile matching your Purdue system.         |
 
 ```bash
 # Container-only profile: NOT a complete HPC configuration
@@ -44,11 +42,11 @@ Use `test` only for example datasets. Purdue institutional profiles include `pur
 
 The [current Gautschi profile](https://github.com/nf-core/configs/blob/master/conf/purdue_gautschi.config) enables Slurm, native Apptainer with automatic mounts, and iGenomes at `/depot/itap/datasets/igenomes`. Supply `--cluster_account`.
 
-| Task request | Routing in the current profile |
-| --- | --- |
-| CPU task, memory at most 384 GB | `cpu` |
-| CPU task, memory above 384 GB | `highmem`; its documented policy requires at least 49 CPUs and a maximum 24-hour request |
-| `process_gpu` label | `smallgpu` by default; `--gpu_partition ai` selects H100 GPUs |
+| Task request                    | Routing in the current profile                                                           |
+| ------------------------------- | ---------------------------------------------------------------------------------------- |
+| CPU task, memory at most 384 GB | `cpu`                                                                                    |
+| CPU task, memory above 384 GB   | `highmem`; its documented policy requires at least 49 CPUs and a maximum 24-hour request |
+| `process_gpu` label             | `smallgpu` by default; `--gpu_partition ai` selects H100 GPUs                            |
 
 Global ceilings: 192 CPUs, 1500 GB, 336 hours. **Partition limits still apply.** Highmem routing does not adjust CPUs or time; set compatible overrides.
 
@@ -85,22 +83,22 @@ Nextflow creates `work/` here automatically. The nf-core toolkit prepares pipeli
 
 ### Are extra exports necessary?
 
-| Variable | Needed for this setup? |
-| --- | --- |
-| `NXF_HOME` | No. Normally defaults to `$HOME/.nextflow`, holding user state such as plugins and downloaded pipeline code. Change it only if you want that storage elsewhere. |
-| `NXF_WORK` | No. The default is `./work`, already in scratch because you changed into the scratch workspace. |
-| `APPTAINER_TMPDIR` | No. Apptainer uses `$TMPDIR` or `/tmp` by default. Set it if image downloads or builds need more temporary space. |
+| Variable           | Needed for this setup?                                                                                                                                          |
+| ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `NXF_HOME`         | No. Normally defaults to `$HOME/.nextflow`, holding user state such as plugins and downloaded pipeline code. Change it only if you want that storage elsewhere. |
+| `NXF_WORK`         | No. The default is `./work`, already in scratch because you changed into the scratch workspace.                                                                 |
+| `APPTAINER_TMPDIR` | No. Apptainer uses `$TMPDIR` or `/tmp` by default. Set it if image downloads or builds need more temporary space.                                               |
 
-For group image sharing, set only `NXF_APPTAINER_CACHEDIR` to the shared image folder, as shown below. 
+For group image sharing, set only `NXF_APPTAINER_CACHEDIR` to the shared image folder, as shown below.
 
 ### Where data should live
 
-| Contents | Location |
-| --- | --- |
-| Input data | Project depot |
-| `work/` task files | Scratch |
-| Nextflow container images (`$RCAC_SCRATCH/.apptainer/cache`) | Scratch |
-| Final results | Persistent storage or archive |
+| Contents                                                     | Location                      |
+| ------------------------------------------------------------ | ----------------------------- |
+| Input data                                                   | Project depot                 |
+| `work/` task files                                           | Scratch                       |
+| Nextflow container images (`$RCAC_SCRATCH/.apptainer/cache`) | Scratch                       |
+| Final results                                                | Persistent storage or archive |
 
 Scratch is not backed up. Keep the input sheet, run command, configuration, and final reports with your archived results.
 
@@ -108,12 +106,12 @@ Scratch is not backed up. Keep the input sheet, run command, configuration, and 
 
 **Pipeline code and container images are stored separately.** A direct run downloads code into Nextflow's asset cache. The nf-core toolkit lets you prepare a group installation in a location you choose.
 
-| Where files go | Direct `nextflow run nf-core/demo` | Download first with the nf-core toolkit |
-| --- | --- | --- |
-| Pipeline code | Under `$NXF_ASSETS`, which defaults to `$NXF_HOME/assets`. With no overrides, the root is `$HOME/.nextflow/assets`. | Under `--outdir`, for example `/depot/YOUR_GROUP/nfcore/pipelines/nf-core-demo/1.2.0/1_2_0/`. |
-| Container images | Pulled as needed into the configured Apptainer image cache. | All pipelines add images to one shared group folder, such as `/depot/YOUR_GROUP/nfcore/container-images/`, using `amend` mode. |
-| Institutional configs | Normally fetched from nf-core/configs when configuring the run. | Included when requested with `--download-configuration yes`. |
-| How you launch | Use the repository name, such as `nf-core/demo`. | Use the local directory containing `main.nf` and `nextflow.config`. |
+| Where files go        | Direct `nextflow run nf-core/demo`                                                                                  | Download first with the nf-core toolkit                                                                                        |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| Pipeline code         | Under `$NXF_ASSETS`, which defaults to `$NXF_HOME/assets`. With no overrides, the root is `$HOME/.nextflow/assets`. | Under `--outdir`, for example `/depot/YOUR_GROUP/nfcore/pipelines/nf-core-demo/1.2.0/1_2_0/`.                                  |
+| Container images      | Pulled as needed into the configured Apptainer image cache.                                                         | All pipelines add images to one shared group folder, such as `/depot/YOUR_GROUP/nfcore/container-images/`, using `amend` mode. |
+| Institutional configs | Normally fetched from nf-core/configs when configuring the run.                                                     | Included when requested with `--download-configuration yes`.                                                                   |
+| How you launch        | Use the repository name, such as `nf-core/demo`.                                                                    | Use the local directory containing `main.nf` and `nextflow.config`.                                                            |
 
 With the default `NXF_HOME`, directly fetched pipeline code goes under `$HOME/.nextflow/assets`. A module or your own `NXF_HOME` / `NXF_ASSETS` setting can change this location. See [Nextflow's environment settings](https://docs.seqera.io/nextflow/reference/env-vars#nxf_assets).
 
@@ -125,7 +123,7 @@ Running `nextflow run nf-core/demo` alone does not select an HPC or container pr
 
 ### Download once and share with your group
 
-**Use one group image folder for all pipelines and releases.** Keep each pipeline release in its own code directory. 
+**Use one group image folder for all pipelines and releases.** Keep each pipeline release in its own code directory.
 
 ```text
 /depot/YOUR_GROUP/nfcore/
@@ -186,10 +184,10 @@ A pipeline's predefined resources may be too small for your data. For example, a
 
 Choose the selector based on how broadly the change should apply:
 
-| Selector | What it changes | When to use it |
-| --- | --- | --- |
+| Selector    | What it changes                                                                                       | When to use it                                         |
+| ----------- | ----------------------------------------------------------------------------------------------------- | ------------------------------------------------------ |
 | `withLabel` | Every process carrying the matching label, such as `process_low`, `process_medium`, or `process_high` | Several steps in a resource tier need larger requests. |
-| `withName` | A process matched by its name, alias, or fully qualified workflow path | One particular step needs more memory or time. |
+| `withName`  | A process matched by its name, alias, or fully qualified workflow path                                | One particular step needs more memory or time.         |
 
 The spelling is **`withLabel`**. Labels and process names vary by pipeline and release. Check the pipeline's `conf/base.config` and module definitions for labels. Find a failing process's full name in the Nextflow error message, `.nextflow.log`, or execution trace.
 
@@ -258,19 +256,7 @@ nextflow run nf-core/demo -r 1.2.0 \
   --outdir "$PWD/results" -resume
 ```
 
-`-c` adds your custom configuration on top of the pipeline and institutional settings. Review the effective configuration before a large run:
-
-```bash
-nextflow pull nf-core/demo -r 1.2.0
-nextflow -c custom.config config nf-core/demo \
-  -profile test,purdue_gautschi -flat | less
-```
-
-### Choose CPUs, memory, and time
-
-Start with pipeline defaults. Check the task trace under `results/pipeline_info/`, Slurm `seff JOBID`, and memory/time failures. Increase only the processes that need it. A request exceeding a node or partition limit can remain pending or fail submission.
-
-> **Manager resources and task resources are separate.** The manager job below requests 2 CPUs and 8 GB to run Nextflow. The institutional profile determines how each pipeline task is submitted. Manager `#SBATCH` settings are separate from `process.cpus`, `memory`, and `time`.
+`-c` adds your custom configuration on top of the pipeline and institutional settings.
 
 ## Launch through Slurm
 
@@ -305,8 +291,6 @@ cd "$RCAC_SCRATCH/nfcore-workshop"
 sbatch run_demo.sh
 ```
 
-The demo is pinned to [release `1.2.0`](https://github.com/nf-core/demo/releases/tag/1.2.0). It requires Nextflow **25.10.4 or newer**, as specified in its [pipeline configuration](https://github.com/nf-core/demo/blob/1.2.0/nextflow.config). Check the loaded version with `nextflow -version`. For another pipeline, choose a compatible release with `-r VERSION` and supply its required inputs. Save your Nextflow version and custom config with the results; a pipeline release pin does not freeze the shared institutional profile.
-
 ## Use idle resources with standby
 
 **Standby is useful for running short tasks on idle capacity across the cluster, including resources outside your group's purchased allocation.** On Negishi, standby jobs have low priority, can run for at most **four hours per job**, and do not consume the group's normal allocation balance. Start time depends on available capacity. See [RCAC's standby policy](https://www.rcac.purdue.edu/knowledge/negishi/run/slurm/queues).
@@ -317,9 +301,9 @@ The four-hour limit applies to each Slurm job, not to the total duration of a pi
 
 The [Negishi profile documentation](https://github.com/nf-core/configs/blob/master/docs/purdue_negishi.md#standby-queue-optional) enables standby with `--use_standby true`. The profile checks each task's requested resources:
 
-| Profile | Tasks eligible for standby | Other tasks |
-| --- | --- | --- |
-| `purdue_negishi` | Time at most 4 hours and memory at most 256 GB | Normal QoS |
+| Profile           | Tasks eligible for standby                                    | Other tasks                                     |
+| ----------------- | ------------------------------------------------------------- | ----------------------------------------------- |
+| `purdue_negishi`  | Time at most 4 hours and memory at most 256 GB                | Normal QoS                                      |
 | `purdue_gautschi` | CPU tasks with time at most 4 hours and memory at most 384 GB | Normal QoS, including high-memory and GPU tasks |
 
 Create a copy of the Slurm script above named `run_demo_standby.sh`. Keep its environment setup and use this run command **on Negishi**:
@@ -348,21 +332,7 @@ For longer analyses, keep the manager on normal QoS and request enough walltime 
 
 ### Resume after a timeout or failed task
 
-Once the previous manager has stopped, resubmit the same script from the same run directory. Its run command already contains `-resume`. Keep `.nextflow/`, the task work directory, inputs, and pipeline release so eligible completed tasks can be reused. Inspect and correct the failure before resubmitting when needed.
-
-**Resume preserves completed tasks; an interrupted task normally starts again from the beginning.** It does not give one task unlimited runtime in four-hour pieces. If a task repeatedly needs more than four hours, give that process a longer time request so the profile routes it to normal QoS. Automatic retries also depend on the pipeline's retry policy. See [Nextflow's resume documentation](https://docs.seqera.io/nextflow/cache-and-resume).
-
-## Inspect, resume, and preserve
-
-```bash
-squeue -u "$USER"      # monitor jobs
-nextflow log           # run history
-# Failed task: inspect work/xx/hash/.command.err
-# Rerun the same command with -resume
-nextflow clean -n      # preview only; do not rush cleanup
-```
-
-Keep the work directory and run history available for `-resume`. Archive important results and the information needed to reproduce the run before cleaning up scratch.
+Once the previous manager has stopped, resubmit the same script from the same run directory with `-resume`.
 
 ## Get help directly in nf-core Slack
 
