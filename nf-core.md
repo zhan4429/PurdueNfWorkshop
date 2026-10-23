@@ -8,7 +8,7 @@ permalink: /nf-core/
 
 In [Nextflow fundamentals]({{ '/' | relative_url }}), you connected processes and channels yourself. **nf-core provides ready-made pipelines built using Nextflow.** You choose a pipeline, provide your inputs, and let Nextflow run the analysis.
 
-This workshop covers choosing a pipeline, running a small demo on Gautschi, checking results, and adjusting process resources.
+This workshop covers choosing a pipeline, running a small demo on Gautschi, checking results, adjusting process resources, and preparing inputs for an RNA-seq analysis.
 
 ## 1. Understand the main components
 
@@ -278,6 +278,73 @@ If you keep both blocks, the `withName` settings take priority for STAR. The `.*
 **These are example requests for rnaseq, not settings needed for the demo.** Choose resources that fit your analysis and cluster limits. In your rnaseq Slurm script, add **`-c custom.config`** to the `nextflow run` command to apply the overrides. Keep the pipeline files unchanged.
 
 The fixed requests above stay the same on retries. To increase a request on retry, use an expression such as `memory = { 128.GB * task.attempt }`. `maxRetries = 1` allows one retry after the first attempt, when the pipeline's error policy permits it.
+
+## 6. Prepare inputs for a real analysis
+
+The demo's `test` profile supplies its inputs. For your own analysis, you prepare those files yourself. Here is a **paired-end nf-core/rnaseq example using release 3.26.0**. Replace the example paths with your files; see the [rnaseq input guide](https://nf-co.re/rnaseq/3.26.0/docs/usage/#samplesheet-input).
+
+### Prepare the reads and samplesheet
+
+Each paired-end sample has two FASTQ files: **R1 and R2**. Keep the matching pair together and give each biological sample a distinct name. Save a plain CSV file named `samplesheet.csv` in your project directory, for example `/depot/YOUR_GROUP/rnaseq_project/`:
+
+```csv
+sample,fastq_1,fastq_2,strandedness
+control_rep1,/depot/YOUR_GROUP/rnaseq_project/fastq/control_rep1_R1.fastq.gz,/depot/YOUR_GROUP/rnaseq_project/fastq/control_rep1_R2.fastq.gz,auto
+treated_rep1,/depot/YOUR_GROUP/rnaseq_project/fastq/treated_rep1_R1.fastq.gz,/depot/YOUR_GROUP/rnaseq_project/fastq/treated_rep1_R2.fastq.gz,auto
+```
+
+| Column | What to provide |
+| --- | --- |
+| `sample` | Sample name without spaces; include all biological replicates as separate samples |
+| `fastq_1` | Absolute path to the sample's R1 FASTQ file |
+| `fastq_2` | Absolute path to its matching R2 file; leave empty for single-end reads |
+| `strandedness` | `forward`, `reverse`, or `unstranded` if known from library preparation; `auto` asks the pipeline to infer it |
+
+Keep the header exactly as shown and check that every read file exists and is readable from compute nodes. The [samplesheet schema](https://github.com/nf-core/rnaseq/blob/3.26.0/assets/schema_input.json) defines the accepted values.
+
+### Prepare the reference files
+
+For this STAR/Salmon example, provide a **genome FASTA** and a **gene annotation GTF** for your organism. Obtain them for the same genome assembly and preferably from the same source and release, such as Ensembl or GENCODE.
+
+For example, store them as `references/genome.fa.gz` and `references/genes.gtf.gz` under your project directory. These names are placeholders for your actual reference files. The pipeline can build the required index from them. See the [reference requirements](https://nf-co.re/rnaseq/3.26.0/docs/usage/#reference-genome-options).
+
+### Pass your inputs to the pipeline
+
+Save this as `run_rnaseq.sh`. Replace `YOUR_ACCOUNT` and `YOUR_GROUP`, and adjust the reference filenames and walltime for your analysis.
+
+```bash
+#!/bin/bash
+#SBATCH --job-name=rnaseq
+#SBATCH --account=YOUR_ACCOUNT
+#SBATCH --partition=cpu
+#SBATCH --nodes=1
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=4
+#SBATCH --time=2-00:00:00
+#SBATCH --output=rnaseq-%j.out
+
+set -euo pipefail
+module purge
+module load nextflow
+
+PROJECT_DIR="/depot/YOUR_GROUP/rnaseq_project"
+mkdir -p "$RCAC_SCRATCH/rnaseq-project"
+cd "$RCAC_SCRATCH/rnaseq-project"
+
+nextflow run nf-core/rnaseq -r 3.26.0 \
+  -profile purdue_gautschi \
+  --cluster_account "$SLURM_JOB_ACCOUNT" \
+  --input "$PROJECT_DIR/samplesheet.csv" \
+  --fasta "$PROJECT_DIR/references/genome.fa.gz" \
+  --gtf "$PROJECT_DIR/references/genes.gtf.gz" \
+  --aligner star_salmon \
+  --outdir "$PWD/results" \
+  -resume -ansi-log false
+```
+
+Submit with `sbatch run_rnaseq.sh`. `--input` points to the samplesheet; `--fasta` and `--gtf` supply the references. `star_salmon` selects STAR alignment and Salmon quantification. The Gautschi profile supplies the container cache location and submits separate task jobs, so the 4 cores above are for the Nextflow manager.
+
+To use your resource overrides from the previous section, place `custom.config` in `$RCAC_SCRATCH/rnaseq-project` and add `-c custom.config` to the run command. Copy final results from scratch to persistent project storage after completion.
 
 ## After the workshop
 
