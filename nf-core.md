@@ -108,49 +108,9 @@ Use `test` for the example dataset. For your own analysis, remove `test` and sup
 
 ## 3. Submit the demo
 
-### Use the Gautschi profile
+### Use the Apptainer profile
 
-Save the following as `run_demo.sh` in your workspace. Replace **both** occurrences of `YOUR_ACCOUNT`. Repeat the cache export in the script so it is set whenever the job runs.
-
-```bash
-#!/bin/bash
-#SBATCH --job-name=nfcore-demo
-#SBATCH --account=YOUR_ACCOUNT
-#SBATCH --partition=cpu
-#SBATCH --nodes=1
-#SBATCH --cpus-per-task=4
-#SBATCH --time=04:00:00
-#SBATCH --output=nfcore-%j.out
-
-set -euo pipefail
-module purge
-module load nextflow
-cd "$RCAC_SCRATCH/nfcore-workshop"
-
-export NXF_APPTAINER_CACHEDIR="$RCAC_SCRATCH/.apptainer/cache"
-mkdir -p "$NXF_APPTAINER_CACHEDIR"
-
-nextflow run nf-core/demo -r 1.2.0 \
-  -profile test,purdue_gautschi \
-  --cluster_account YOUR_ACCOUNT \
-  --outdir "$PWD/results" \
-  -resume -ansi-log false
-```
-
-Submit and check your jobs:
-
-```bash
-sbatch run_demo.sh
-squeue -u "$USER"
-```
-
-The script starts the **Nextflow manager** with 4 CPUs. Nextflow submits separate Slurm jobs for the pipeline tasks, each with its own resource request. The manager must remain running until the pipeline finishes.
-
-The first run may take longer while Nextflow downloads the pipeline and containers. Later runs can reuse these downloads.
-
-### Alternative: run with `test,apptainer`
-
-The `apptainer` profile enables containers. This script runs the whole demo within **one Slurm job with 4 CPU cores**. Memory is allocated with the cores on Gautschi. The Gautschi profile example above submits separate jobs for the pipeline tasks.
+The `apptainer` profile enables containers. This script runs the whole demo within **one Slurm job with 4 CPU cores**. Memory is allocated with the cores on Gautschi. The Gautschi profile example below submits separate jobs for the pipeline tasks.
 
 Save this as `run_demo_apptainer.sh` in your workspace and replace `YOUR_ACCOUNT`:
 
@@ -188,9 +148,53 @@ sbatch run_demo_apptainer.sh
 squeue -u "$USER"
 ```
 
-This example uses the same image cache as the Gautschi profile. It does not need `--cluster_account` because `#SBATCH --account` sets the account for this single job. Its results and task files are in the `apptainer-demo` subfolder. See the [demo profile definitions](https://github.com/nf-core/demo/blob/1.2.0/nextflow.config) for these settings.
+This example uses the same image cache as the Gautschi profile. It does not need `--cluster_account` because `#SBATCH --account` sets the account for this single job.
 
 **For real analyses, request more cores as needed.** Four cores are for this small test dataset. With `test,apptainer`, all tasks share the one job's allocation. Heavier analyses need enough cores and the associated memory for the most demanding task and any tasks running at the same time. For your own data, also remove `test` and provide the pipeline's required inputs.
+
+### Use the Gautschi profile
+
+Save the following as `run_demo.sh` in your workspace. Replace **both** occurrences of `YOUR_ACCOUNT`.
+
+```bash
+#!/bin/bash
+#SBATCH --job-name=nfcore-demo
+#SBATCH --account=YOUR_ACCOUNT
+#SBATCH --partition=cpu
+#SBATCH --nodes=1
+#SBATCH --cpus-per-task=4
+#SBATCH --time=04:00:00
+#SBATCH --output=nfcore-%j.out
+
+set -euo pipefail
+module purge
+module load nextflow
+cd "$RCAC_SCRATCH/nfcore-workshop"
+
+nextflow run nf-core/demo -r 1.2.0 \
+  -profile test,purdue_gautschi \
+  --cluster_account YOUR_ACCOUNT \
+  --outdir "$PWD/results" \
+  -resume -ansi-log false
+```
+
+**Optional cache override:** The `purdue_gautschi` profile already sets the container image cache to `$RCAC_SCRATCH/.apptainer/cache`, so no export is needed. To use another folder, add the following before `nextflow run` in your script, replacing the example path with your chosen folder:
+
+```bash
+export NXF_APPTAINER_CACHEDIR="/path/to/your/container-cache"
+mkdir -p "$NXF_APPTAINER_CACHEDIR"
+```
+
+Submit and check your jobs:
+
+```bash
+sbatch run_demo.sh
+squeue -u "$USER"
+```
+
+The script starts the **Nextflow manager** with 4 CPUs. Nextflow submits separate Slurm jobs for the pipeline tasks, each with its own resource request. The manager must remain running until the pipeline finishes.
+
+The first run may take longer while Nextflow downloads the pipeline and containers. Later runs can reuse these downloads.
 
 ## 4. Check results and resume
 
@@ -242,9 +246,30 @@ withLabel: process_high {
 }
 ```
 
-On the first attempt, STAR requests **12 CPUs, 72 GB, and 16 hours**, before other overrides or resource caps. `task.attempt` starts at 1 and increases on a retry.
-
 Follow this same path for other steps: **process definition → label → settings in `conf/base.config`**. STAR's alignment arguments are configured separately in [`conf/modules/align_star.config`](https://github.com/nf-core/rnaseq/blob/3.27.0/conf/modules/align_star.config).
+
+### How `* task.attempt` changes resources on retry
+
+`task.attempt` is the attempt number for an individual task. It starts at **1** and increases when Nextflow automatically retries that failed task. The expressions inside `{ ... }` are evaluated for each attempt, so `* task.attempt` multiplies each base resource request by the attempt number:
+
+| Task attempt | CPUs requested | Memory requested | Time limit |
+| --- | --- | --- | --- |
+| 1: initial attempt | 12 | 72 GB | 16 hours |
+| 2: first retry | 24 | 144 GB | 32 hours |
+| 3: second retry, if allowed | 36 | 216 GB | 48 hours |
+
+The increase is linear: **1×, 2×, 3×** the base request. These values apply to each matching task, before other overrides or resource caps. The time is a maximum runtime; a task can finish earlier. See [Nextflow's dynamic task resources documentation](https://docs.seqera.io/nextflow/process#dynamic-task-resources).
+
+**Retries must also be permitted by the error policy.** In [nf-core/rnaseq 3.27.0](https://github.com/nf-core/rnaseq/blob/3.27.0/conf/base.config), the default settings are:
+
+```groovy
+errorStrategy = { task.exitStatus in ((130..145) + 104 + (175..177)) ? 'retry' : 'finish' }
+maxRetries    = 1
+```
+
+Only the listed exit codes trigger a retry. `maxRetries = 1` allows **one retry after the initial attempt**, for two attempts total. The third row in the table requires `maxRetries` of at least 2. Individual processes, profiles, or custom configurations can override these defaults.
+
+The counter tracks attempts of the same task. Simply launching the whole workflow a second time does not itself mean `task.attempt = 2`.
 
 ### Override by label or process name
 
@@ -259,8 +284,8 @@ process {
     time   = 24.h
   }
 
-  // Change only STAR_ALIGN within the ALIGN_STAR workflow.
-  withName: '.*ALIGN_STAR:STAR_ALIGN' {
+  // Change tasks named STAR_ALIGN.
+  withName: STAR_ALIGN {
     cpus   = 24
     memory = 128.GB
     time   = 24.h
@@ -273,11 +298,11 @@ process {
 | `withLabel` | Every `process_high` task requests 16 CPUs, 96 GB, and 24 hours |
 | `withName` | STAR alignment tasks request 24 CPUs, 128 GB, and 24 hours |
 
-If you keep both blocks, the `withName` settings take priority for STAR. The `.*` matches the earlier part of the workflow path. For another step, copy its full process name from the run's error message or `.nextflow.log`.
+If you keep both blocks, the `withName` settings take priority for STAR. `STAR_ALIGN` matches the process name directly. For another step, use its process name from the module definition. A full workflow path can target a specific occurrence when the same process is used in several workflows.
 
 **These are example requests for rnaseq, not settings needed for the demo.** Choose resources that fit your analysis and cluster limits. In your rnaseq Slurm script, add **`-c custom.config`** to the `nextflow run` command to apply the overrides. Keep the pipeline files unchanged.
 
-The fixed requests above stay the same on retries. To increase a request on retry, use an expression such as `memory = { 128.GB * task.attempt }`. `maxRetries = 1` allows one retry after the first attempt, when the pipeline's error policy permits it.
+The fixed requests above stay the same on retries. To increase a request on retry, use an expression such as `memory = { 128.GB * task.attempt }`: 128 GB on the initial attempt and 256 GB on the first retry, if permitted by the error policy and resource limits.
 
 ## 6. Prepare inputs for a real analysis
 
