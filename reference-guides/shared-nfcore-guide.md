@@ -134,7 +134,7 @@ nextflow run "$PIPELINE_DIR" \
   --fasta /depot/YOUR_GROUP/references/genome.fa \
   --gtf /depot/YOUR_GROUP/references/genes.gtf \
   --outdir "$RUN_DIR/results" \
-  -resume -ansi-log false
+  -resume
 ```
 
 The FASTA and GTF must describe the same genome assembly. Add or adjust pipeline options for your experiment. Choose a Nextflow module compatible with the installed pipeline release; record the version actually loaded.

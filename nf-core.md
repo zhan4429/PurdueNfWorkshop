@@ -138,7 +138,7 @@ mkdir -p "$NXF_APPTAINER_CACHEDIR"
 nextflow run nf-core/demo -r 1.2.0 \
   -profile test,apptainer \
   --outdir "$PWD/results" \
-  -resume -ansi-log false
+  -resume
 ```
 
 Submit from your workspace:
@@ -175,7 +175,7 @@ nextflow run nf-core/demo -r 1.2.0 \
   -profile test,purdue_gautschi \
   --cluster_account YOUR_ACCOUNT \
   --outdir "$PWD/results" \
-  -resume -ansi-log false
+  -resume
 ```
 
 **Optional cache override:** The `purdue_gautschi` profile already sets the container image cache to `$RCAC_SCRATCH/.apptainer/cache`, so no export is needed. To use another folder, add the following before `nextflow run` in your script, replacing the example path with your chosen folder:
@@ -364,7 +364,7 @@ nextflow run nf-core/rnaseq -r 3.27.0 \
   --gtf "$PROJECT_DIR/references/genes.gtf.gz" \
   --aligner star_salmon \
   --outdir "$PWD/results" \
-  -resume -ansi-log false
+  -resume
 ```
 
 Submit with `sbatch run_rnaseq.sh`. `--input` points to the samplesheet; `--fasta` and `--gtf` supply the references. `star_salmon` selects STAR alignment and Salmon quantification. The Gautschi profile supplies the container cache location and submits separate task jobs.
