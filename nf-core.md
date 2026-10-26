@@ -8,7 +8,7 @@ permalink: /nf-core/
 
 In [Nextflow fundamentals]({{ '/' | relative_url }}), you connected processes and channels yourself. **nf-core provides ready-made pipelines built using Nextflow.** You choose a pipeline, provide your inputs, and let Nextflow run the analysis.
 
-This workshop covers choosing a pipeline, running a small demo on Gautschi, checking results, adjusting process resources, and preparing inputs for an RNA-seq analysis.
+This workshop covers choosing a pipeline, showing example jobs on Gautschi, checking results, adjusting process resources, and preparing inputs for an RNA-seq analysis.
 
 ## 1. Understand the main components
 
