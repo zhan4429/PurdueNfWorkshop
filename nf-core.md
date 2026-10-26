@@ -12,13 +12,13 @@ This workshop covers choosing a pipeline, showing example jobs on Gautschi, chec
 
 ## 1. Understand the main components
 
-| Component | What it does |
-| --- | --- |
-| **Nextflow** | Runs the workflow and tracks completed tasks |
-| **nf-core** | Provides community-maintained bioinformatics pipelines |
-| **Slurm** | Schedules tasks on the cluster |
-| **Apptainer** | Runs the analysis software inside containers |
-| **Institutional profile** | Supplies settings for your cluster |
+| Component                 | What it does                                           |
+| ------------------------- | ------------------------------------------------------ |
+| **Nextflow**              | Runs the workflow and tracks completed tasks           |
+| **nf-core**               | Provides community-maintained bioinformatics pipelines |
+| **Slurm**                 | Schedules tasks on the cluster                         |
+| **Apptainer**             | Runs the analysis software inside containers           |
+| **Institutional profile** | Supplies settings for your cluster                     |
 
 Choose a pipeline for your research question at [nf-co.re/pipelines](https://nf-co.re/pipelines). Read its input requirements and use the documentation for the release you plan to run.
 
@@ -28,19 +28,17 @@ For example, **nf-core/rnaseq** performs RNA-seq quality control, trimming, alig
 
 Open the [nf-core/rnaseq GitHub repository](https://github.com/nf-core/rnaseq). These are the main places to look when you want to understand or customize a pipeline:
 
-| File or folder | What it is used for |
-| --- | --- |
-| `README.md` and `docs/` | Overview, input requirements, usage, and output descriptions |
-| `main.nf` | Entry point that starts the workflow |
-| `nextflow.config` | Default parameters, profiles, and links to other configuration files |
-| `nextflow_schema.json` | Descriptions and validation rules for pipeline parameters |
-| `conf/base.config` | Default CPU, memory, and time requests, grouped by process label |
-| `conf/modules/` | Settings for particular steps, such as STAR arguments and output locations |
+| File or folder                   | What it is used for                                                                            |
+| -------------------------------- | ---------------------------------------------------------------------------------------------- |
+| `README.md` and `docs/`          | Overview, input requirements, usage, and output descriptions                                   |
+| `main.nf`                        | Entry point that starts the workflow                                                           |
+| `nextflow.config`                | Default parameters, profiles, and links to other configuration files                           |
+| `nextflow_schema.json`           | Descriptions and validation rules for pipeline parameters                                      |
+| `conf/base.config`               | Default CPU, memory, and time requests, grouped by process label                               |
+| `conf/modules/`                  | Settings for particular steps, such as STAR arguments and output locations                     |
 | `workflows/` and `subworkflows/` | Connect analysis steps; subworkflows group related steps, such as alignment and BAM processing |
-| `modules/nf-core/` | Reusable tool modules imported from the shared nf-core collection, such as STAR and FastQC |
-| `modules/local/` | Modules written for this pipeline's particular needs, such as rnaseq's DESeq2 QC step |
-
-**“Local” means local to the pipeline project.** Both types of module can run on HPC with containers. A module defines a step's inputs, command, outputs, and resource label.
+| `modules/nf-core/`               | Reusable tool modules imported from the shared nf-core collection, such as STAR and FastQC     |
+| `modules/local/`                 | Modules written for this pipeline's particular needs, such as rnaseq's DESeq2 QC step          |
 
 On GitHub, use the branch/tag dropdown to select the release matching your `-r` option. The rnaseq examples below use `3.27.0`; file locations and settings can differ between releases.
 
@@ -78,11 +76,11 @@ The export is optional with the [Gautschi institutional profile](https://nf-co.r
 
 `nextflow run nf-core/demo -r 1.2.0` downloads the pipeline code automatically. By default, it is stored in **`$HOME/.nextflow/assets/nf-core/demo/`**, separate from your analysis files and container images. Nextflow reuses this copy and selects the release specified by `-r`.
 
-| Contents | Location in this workshop |
-| --- | --- |
-| Pipeline code | `$HOME/.nextflow/assets/nf-core/demo/` |
-| Container images for all pipelines | `$RCAC_SCRATCH/.apptainer/cache/` |
-| Task files and final outputs | `work/` and `results/` in your scratch workspace |
+| Contents                           | Location in this workshop                        |
+| ---------------------------------- | ------------------------------------------------ |
+| Pipeline code                      | `$HOME/.nextflow/assets/nf-core/demo/`           |
+| Container images for all pipelines | `$RCAC_SCRATCH/.apptainer/cache/`                |
+| Task files and final outputs       | `work/` and `results/` in your scratch workspace |
 
 If your environment sets `NXF_HOME` or `NXF_ASSETS`, the pipeline code location may differ.
 
@@ -95,12 +93,12 @@ nextflow run nf-core/demo -r 1.2.0 \
   --outdir results
 ```
 
-| Option | Meaning |
-| --- | --- |
-| `-r 1.2.0` | Run this pipeline release |
+| Option                          | Meaning                                               |
+| ------------------------------- | ----------------------------------------------------- |
+| `-r 1.2.0`                      | Run this pipeline release                             |
 | `-profile test,purdue_gautschi` | Use test data and Gautschi's Slurm/Apptainer settings |
-| `--cluster_account` | Charge task jobs to your allocation |
-| `--outdir` | Write final results here |
+| `--cluster_account`             | Charge task jobs to your allocation                   |
+| `--outdir`                      | Write final results here                              |
 
 **One dash** is for Nextflow options, such as `-r`, `-profile`, and `-resume`. **Two dashes** are for pipeline parameters, such as `--input` and `--outdir`.
 
@@ -198,12 +196,12 @@ The first run may take longer while Nextflow downloads the pipeline and containe
 
 In your workspace, look for:
 
-| File or folder | What to check |
-| --- | --- |
-| `nfcore-<job-id>.out` | Slurm output and pipeline progress |
-| `results/` | Final outputs and reports |
-| `work/` | Temporary files for each task |
-| `.nextflow.log` | Detailed information if the run fails |
+| File or folder        | What to check                         |
+| --------------------- | ------------------------------------- |
+| `nfcore-<job-id>.out` | Slurm output and pipeline progress    |
+| `results/`            | Final outputs and reports             |
+| `work/`               | Temporary files for each task         |
+| `.nextflow.log`       | Detailed information if the run fails |
 
 Open the MultiQC HTML report under `results/` to review the quality-control results.
 
@@ -250,11 +248,11 @@ Follow this same path for other steps: **process definition → label → settin
 
 `task.attempt` is the attempt number for an individual task. It starts at **1** and increases when Nextflow automatically retries that failed task. The expressions inside `{ ... }` are evaluated for each attempt, so `* task.attempt` multiplies each base resource request by the attempt number:
 
-| Task attempt | CPUs requested | Memory requested | Time limit |
-| --- | --- | --- | --- |
-| 1: initial attempt | 12 | 72 GB | 16 hours |
-| 2: first retry | 24 | 144 GB | 32 hours |
-| 3: second retry, if allowed | 36 | 216 GB | 48 hours |
+| Task attempt                | CPUs requested | Memory requested | Time limit |
+| --------------------------- | -------------- | ---------------- | ---------- |
+| 1: initial attempt          | 12             | 72 GB            | 16 hours   |
+| 2: first retry              | 24             | 144 GB           | 32 hours   |
+| 3: second retry, if allowed | 36             | 216 GB           | 48 hours   |
 
 The increase is linear: **1×, 2×, 3×** the base request. These values apply to each matching task, before other overrides or resource caps. The time is a maximum runtime; a task can finish earlier. See [Nextflow's dynamic task resources documentation](https://docs.seqera.io/nextflow/process#dynamic-task-resources).
 
@@ -291,10 +289,10 @@ process {
 }
 ```
 
-| Selector | Effect of this example |
-| --- | --- |
+| Selector    | Effect of this example                                                                                      |
+| ----------- | ----------------------------------------------------------------------------------------------------------- |
 | `withLabel` | Every `process_high` task starts with 16 CPUs, 96 GB, and 24 hours; each request scales with `task.attempt` |
-| `withName` | STAR alignment tasks request a fixed 24 CPUs, 128 GB, and 24 hours on every attempt |
+| `withName`  | STAR alignment tasks request a fixed 24 CPUs, 128 GB, and 24 hours on every attempt                         |
 
 If you keep both blocks, the `withName` settings take priority for STAR. `STAR_ALIGN` matches the process name directly. For another step, use its process name from the module definition. A full workflow path can target a specific occurrence when the same process is used in several workflows.
 
@@ -406,11 +404,11 @@ control_rep1,/depot/YOUR_GROUP/rnaseq_project/fastq/control_rep1_R1.fastq.gz,/de
 treated_rep1,/depot/YOUR_GROUP/rnaseq_project/fastq/treated_rep1_R1.fastq.gz,/depot/YOUR_GROUP/rnaseq_project/fastq/treated_rep1_R2.fastq.gz,auto
 ```
 
-| Column | What to provide |
-| --- | --- |
-| `sample` | Sample name without spaces; include all biological replicates as separate samples |
-| `fastq_1` | Absolute path to the sample's R1 FASTQ file |
-| `fastq_2` | Absolute path to its matching R2 file; leave empty for single-end reads |
+| Column         | What to provide                                                                                               |
+| -------------- | ------------------------------------------------------------------------------------------------------------- |
+| `sample`       | Sample name without spaces; include all biological replicates as separate samples                             |
+| `fastq_1`      | Absolute path to the sample's R1 FASTQ file                                                                   |
+| `fastq_2`      | Absolute path to its matching R2 file; leave empty for single-end reads                                       |
 | `strandedness` | `forward`, `reverse`, or `unstranded` if known from library preparation; `auto` asks the pipeline to infer it |
 
 Keep the header exactly as shown and check that every read file exists and is readable from compute nodes. The [samplesheet schema](https://github.com/nf-core/rnaseq/blob/3.27.0/assets/schema_input.json) defines the accepted values.
