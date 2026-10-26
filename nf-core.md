@@ -277,11 +277,11 @@ Save the following as `custom.config` in your **rnaseq run directory**. It shows
 
 ```groovy
 process {
-  // Change every process with the process_high label.
+  // Scale resources on retry for tasks with the process_high label.
   withLabel: 'process_high' {
-    cpus   = 16
-    memory = 96.GB
-    time   = 24.h
+    cpus   = { 16    * task.attempt }
+    memory = { 96.GB * task.attempt }
+    time   = { 24.h  * task.attempt }
   }
 
   // Change tasks named STAR_ALIGN.
@@ -295,14 +295,14 @@ process {
 
 | Selector | Effect of this example |
 | --- | --- |
-| `withLabel` | Every `process_high` task requests 16 CPUs, 96 GB, and 24 hours |
-| `withName` | STAR alignment tasks request 24 CPUs, 128 GB, and 24 hours |
+| `withLabel` | Every `process_high` task starts with 16 CPUs, 96 GB, and 24 hours; each request scales with `task.attempt` |
+| `withName` | STAR alignment tasks request a fixed 24 CPUs, 128 GB, and 24 hours on every attempt |
 
 If you keep both blocks, the `withName` settings take priority for STAR. `STAR_ALIGN` matches the process name directly. For another step, use its process name from the module definition. A full workflow path can target a specific occurrence when the same process is used in several workflows.
 
 **These are example requests for rnaseq, not settings needed for the demo.** Choose resources that fit your analysis and cluster limits. In your rnaseq Slurm script, add **`-c custom.config`** to the `nextflow run` command to apply the overrides. Keep the pipeline files unchanged.
 
-The fixed requests above stay the same on retries. To increase a request on retry, use an expression such as `memory = { 128.GB * task.attempt }`: 128 GB on the initial attempt and 256 GB on the first retry, if permitted by the error policy and resource limits.
+With the `withLabel` block alone, the first retry requests **32 CPUs, 192 GB, and 48 hours**, if permitted by the error policy and resource limits. The fixed `withName` requests stay the same on retries. To scale those too, use the same `* task.attempt` expressions, such as `memory = { 128.GB * task.attempt }`.
 
 ### Submit with `custom.config`
 
