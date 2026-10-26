@@ -137,8 +137,7 @@ mkdir -p "$NXF_APPTAINER_CACHEDIR"
 
 nextflow run nf-core/demo -r 1.2.0 \
   -profile test,apptainer \
-  --outdir "$PWD/results" \
-  -resume
+  --outdir "$PWD/results"
 ```
 
 Submit from your workspace:
@@ -174,8 +173,7 @@ cd "$RCAC_SCRATCH/nfcore-workshop"
 nextflow run nf-core/demo -r 1.2.0 \
   -profile test,purdue_gautschi \
   --cluster_account YOUR_ACCOUNT \
-  --outdir "$PWD/results" \
-  -resume
+  --outdir "$PWD/results"
 ```
 
 **Optional cache override:** The `purdue_gautschi` profile already sets the container image cache to `$RCAC_SCRATCH/.apptainer/cache`, so no export is needed. To use another folder, add the following before `nextflow run` in your script, replacing the example path with your chosen folder:
@@ -209,7 +207,7 @@ In your workspace, look for:
 
 Open the MultiQC HTML report under `results/` to review the quality-control results.
 
-Both scripts include `-resume`. Once the previous run has stopped, resubmit the same script you used:
+The demo scripts start new tasks by default. To resume after a run has stopped, add `-resume` to the `nextflow run` command in the script you used, then resubmit it:
 
 ```bash
 sbatch run_demo.sh
@@ -357,6 +355,43 @@ squeue -u "$USER"
 ## 6. Try standby for short tasks
 
 On Gautschi, adding `--use_standby true` lets eligible CPU tasks use standby. Tasks must request at most 4 hours and 384 GB; other tasks use normal QoS. Leave this option out for the workshop's first run. See the [Gautschi profile](https://github.com/nf-core/configs/blob/master/conf/purdue_gautschi.config) for details.
+
+Save the following as `run_demo_standby.sh` in your workspace and replace `YOUR_ACCOUNT`. This example runs the small nf-core/demo test dataset:
+
+```bash
+#!/bin/bash
+#SBATCH --job-name=nfcore-demo-standby
+#SBATCH --account=YOUR_ACCOUNT
+#SBATCH --partition=cpu
+#SBATCH --qos=standby
+#SBATCH --nodes=1
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=4
+#SBATCH --time=04:00:00
+#SBATCH --output=nfcore-standby-%j.out
+
+set -euo pipefail
+module purge
+module load nextflow
+
+mkdir -p "$RCAC_SCRATCH/nfcore-workshop/standby-demo"
+cd "$RCAC_SCRATCH/nfcore-workshop/standby-demo"
+
+nextflow run nf-core/demo -r 1.2.0 \
+  -profile test,purdue_gautschi \
+  --cluster_account "$SLURM_JOB_ACCOUNT" \
+  --use_standby true \
+  --outdir "$PWD/results"
+```
+
+Submit from your workspace:
+
+```bash
+sbatch run_demo_standby.sh
+squeue -u "$USER"
+```
+
+**The two standby settings apply to different jobs.** `#SBATCH --qos=standby` puts the Nextflow manager job in standby, with a 4-hour limit. `--use_standby true` tells the Gautschi profile to route eligible analysis task jobs to standby. Tasks that exceed the standby limits use normal QoS.
 
 ## 7. Prepare inputs for a real analysis
 
