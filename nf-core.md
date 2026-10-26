@@ -363,11 +363,10 @@ Save the following as `run_demo_standby.sh` in your workspace and replace `YOUR_
 #SBATCH --job-name=nfcore-demo-standby
 #SBATCH --account=YOUR_ACCOUNT
 #SBATCH --partition=cpu
-#SBATCH --qos=standby
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=4
-#SBATCH --time=04:00:00
+#SBATCH --time=2-00:00:00
 #SBATCH --output=nfcore-standby-%j.out
 
 set -euo pipefail
@@ -391,7 +390,7 @@ sbatch run_demo_standby.sh
 squeue -u "$USER"
 ```
 
-**The two standby settings apply to different jobs.** `#SBATCH --qos=standby` puts the Nextflow manager job in standby, with a 4-hour limit. `--use_standby true` tells the Gautschi profile to route eligible analysis task jobs to standby. Tasks that exceed the standby limits use normal QoS.
+**The parent job runs on the regular `cpu` partition with the account's default QoS.** Its 2-day time limit lets the Nextflow manager oversee the whole workflow, including time spent waiting for task jobs. Adjust this limit for your analysis. `--use_standby true` tells the Gautschi profile to submit eligible Nextflow tasks to standby, where each task has a maximum 4-hour time limit. Tasks that exceed the standby limits use normal QoS.
 
 ## 7. Prepare inputs for a real analysis
 
