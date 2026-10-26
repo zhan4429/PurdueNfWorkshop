@@ -352,7 +352,7 @@ squeue -u "$USER"
 
 ## 6. Try standby for short tasks
 
-On Gautschi, adding `--use_standby true` lets eligible CPU tasks use standby. Tasks must request at most 4 hours and 384 GB; other tasks use normal QoS. Leave this option out for the workshop's first run. See the [Gautschi profile](https://github.com/nf-core/configs/blob/master/conf/purdue_gautschi.config) for details.
+On Gautschi, adding `--use_standby true` lets eligible CPU tasks use standby. Tasks must request at most 4 hours and 384 GB; other tasks use normal QoS. See the [Gautschi profile](https://github.com/nf-core/configs/blob/master/conf/purdue_gautschi.config) for details.
 
 Save the following as `run_demo_standby.sh` in your workspace and replace `YOUR_ACCOUNT`. This example runs the small nf-core/demo test dataset:
 
