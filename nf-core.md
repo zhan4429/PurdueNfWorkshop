@@ -304,6 +304,56 @@ If you keep both blocks, the `withName` settings take priority for STAR. `STAR_A
 
 The fixed requests above stay the same on retries. To increase a request on retry, use an expression such as `memory = { 128.GB * task.attempt }`: 128 GB on the initial attempt and 256 GB on the first retry, if permitted by the error policy and resource limits.
 
+### Submit with `custom.config`
+
+Create your rnaseq run directory:
+
+```bash
+mkdir -p "$RCAC_SCRATCH/rnaseq-project"
+cd "$RCAC_SCRATCH/rnaseq-project"
+```
+
+Save `custom.config` above and the following script as `run_rnaseq_custom.sh` in this directory. Replace `YOUR_ACCOUNT` and `YOUR_GROUP`, and prepare your samplesheet and reference files as described in [section 6](#6-prepare-inputs-for-a-real-analysis). Adjust the filenames and walltime for your analysis.
+
+```bash
+#!/bin/bash
+#SBATCH --job-name=rnaseq-custom
+#SBATCH --account=YOUR_ACCOUNT
+#SBATCH --partition=cpu
+#SBATCH --nodes=1
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=16
+#SBATCH --time=2-00:00:00
+#SBATCH --output=rnaseq-custom-%j.out
+
+set -euo pipefail
+module purge
+module load nextflow
+
+PROJECT_DIR="/depot/YOUR_GROUP/rnaseq_project"
+cd "$RCAC_SCRATCH/rnaseq-project"
+
+nextflow run nf-core/rnaseq -r 3.27.0 \
+  -profile purdue_gautschi \
+  -c custom.config \
+  --cluster_account "$SLURM_JOB_ACCOUNT" \
+  --input "$PROJECT_DIR/samplesheet.csv" \
+  --fasta "$PROJECT_DIR/references/genome.fa.gz" \
+  --gtf "$PROJECT_DIR/references/genes.gtf.gz" \
+  --aligner star_salmon \
+  --outdir "$PWD/results" \
+  -resume
+```
+
+Submit from the same run directory and check your jobs:
+
+```bash
+sbatch run_rnaseq_custom.sh
+squeue -u "$USER"
+```
+
+**`-c custom.config` loads your resource overrides.** The `#SBATCH` directives allocate resources for the Nextflow manager. The Gautschi profile submits separate jobs for analysis tasks, using the resource requests from the pipeline and your `custom.config`.
+
 ## 6. Prepare inputs for a real analysis
 
 The demo's `test` profile supplies its inputs. For your own analysis, you prepare those files yourself. Here is a **paired-end nf-core/rnaseq example using release 3.27.0**. Replace the example paths with your files; see the [rnaseq input guide](https://nf-co.re/rnaseq/3.27.0/docs/usage/#samplesheet-input).
