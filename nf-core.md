@@ -313,7 +313,7 @@ mkdir -p "$RCAC_SCRATCH/rnaseq-project"
 cd "$RCAC_SCRATCH/rnaseq-project"
 ```
 
-Save `custom.config` above and the following script as `run_rnaseq_custom.sh` in this directory. Replace `YOUR_ACCOUNT` and `YOUR_GROUP`, and prepare your samplesheet and reference files as described in [section 6](#6-prepare-inputs-for-a-real-analysis). Adjust the filenames and walltime for your analysis.
+Save `custom.config` above and the following script as `run_rnaseq_custom.sh` in this directory. Replace `YOUR_ACCOUNT` and `YOUR_GROUP`, and prepare your samplesheet and reference files as described in [section 7](#7-prepare-inputs-for-a-real-analysis). Adjust the filenames and walltime for your analysis.
 
 ```bash
 #!/bin/bash
@@ -354,7 +354,11 @@ squeue -u "$USER"
 
 **`-c custom.config` loads your resource overrides.** The `#SBATCH` directives allocate resources for the Nextflow manager. The Gautschi profile submits separate jobs for analysis tasks, using the resource requests from the pipeline and your `custom.config`.
 
-## 6. Prepare inputs for a real analysis
+## 6. Try standby for short tasks
+
+On Gautschi, adding `--use_standby true` lets eligible CPU tasks use standby. Tasks must request at most 4 hours and 384 GB; other tasks use normal QoS. Leave this option out for the workshop's first run. See the [Gautschi profile](https://github.com/nf-core/configs/blob/master/conf/purdue_gautschi.config) for details.
+
+## 7. Prepare inputs for a real analysis
 
 The demo's `test` profile supplies its inputs. For your own analysis, you prepare those files yourself. Here is a **paired-end nf-core/rnaseq example using release 3.27.0**. Replace the example paths with your files; see the [rnaseq input guide](https://nf-co.re/rnaseq/3.27.0/docs/usage/#samplesheet-input).
 
@@ -421,13 +425,9 @@ Submit with `sbatch run_rnaseq.sh`. `--input` points to the samplesheet; `--fast
 
 **Choose appropriate cores for your needs.** The 16 cores above are an example allocation for the Nextflow manager. With `purdue_gautschi`, each analysis step has a separate resource request; use the pipeline defaults or `custom.config` to adjust its cores and memory based on genome size, read depth, and tool requirements. Increasing the manager's cores does not increase STAR's cores. With the `apptainer` profile alone, request enough cores and bundled memory for the whole analysis within one job.
 
-To use your resource overrides from the previous section, place `custom.config` in `$RCAC_SCRATCH/rnaseq-project` and add `-c custom.config` to the run command. Copy final results from scratch to persistent project storage after completion.
+To use your resource overrides from [section 5](#5-override-pipeline-resource-settings), place `custom.config` in `$RCAC_SCRATCH/rnaseq-project` and add `-c custom.config` to the run command. Copy final results from scratch to persistent project storage after completion.
 
 ## After the workshop
-
-### Try standby for short tasks
-
-On Gautschi, adding `--use_standby true` lets eligible CPU tasks use standby. Tasks must request at most 4 hours and 384 GB; other tasks use normal QoS. Leave this option out for the workshop's first run. See the [Gautschi profile](https://github.com/nf-core/configs/blob/master/conf/purdue_gautschi.config) for details.
 
 ### Ask for help
 
