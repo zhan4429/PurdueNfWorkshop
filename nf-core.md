@@ -168,7 +168,7 @@ Save this as `run_demo_apptainer.sh` in your workspace and replace `YOUR_ACCOUNT
 #SBATCH --output=nfcore-%j.out
 
 set -euo pipefail
-module purge
+module --force purge
 module load nextflow
 
 mkdir -p "$RCAC_SCRATCH/nfcore-workshop/apptainer-demo"
@@ -208,7 +208,7 @@ Save the following as `run_demo.sh` in your workspace. Replace **both** occurren
 #SBATCH --output=nfcore-%j.out
 
 set -euo pipefail
-module purge
+module --force purge
 module load nextflow
 cd "$RCAC_SCRATCH/nfcore-workshop"
 
@@ -367,7 +367,7 @@ Save `custom.config` above and the following script as `run_rnaseq_custom.sh` in
 #SBATCH --output=rnaseq-custom-%j.out
 
 set -euo pipefail
-module purge
+module --force purge
 module load nextflow
 
 PROJECT_DIR="/depot/YOUR_GROUP/rnaseq_project"
@@ -412,7 +412,7 @@ Save the following as `run_demo_standby.sh` in your workspace and replace `YOUR_
 #SBATCH --output=nfcore-standby-%j.out
 
 set -euo pipefail
-module purge
+module --force purge
 module load nextflow
 
 mkdir -p "$RCAC_SCRATCH/nfcore-workshop/standby-demo"
@@ -479,7 +479,7 @@ Save this as `run_rnaseq.sh`. Replace `YOUR_ACCOUNT` and `YOUR_GROUP`, and adjus
 #SBATCH --output=rnaseq-%j.out
 
 set -euo pipefail
-module purge
+module --force purge
 module load nextflow
 
 PROJECT_DIR="/depot/YOUR_GROUP/rnaseq_project"
