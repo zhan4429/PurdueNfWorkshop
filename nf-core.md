@@ -74,15 +74,22 @@ The export is optional with the [Gautschi institutional profile](https://nf-co.r
 
 ### Where does the pipeline code go?
 
-`nextflow run nf-core/demo -r 1.2.0` downloads the pipeline code automatically. By default, it is stored in **`$HOME/.nextflow/assets/nf-core/demo/`**, separate from your analysis files and container images. Nextflow reuses this copy and selects the release specified by `-r`.
+`nextflow run nf-core/demo -r 1.2.0` downloads the pipeline code automatically under **`$HOME/.nextflow/assets/`**, separate from your analysis files and container images. Nextflow reuses the downloaded code and selects the release specified by `-r`.
+
+**Newer Nextflow versions store nf-core pipelines under `$HOME/.nextflow/assets/.repos/nf-core/`.** Nextflow 26.04 introduced separate checkouts for each revision. With this layout, the demo's repository cache is `$HOME/.nextflow/assets/.repos/nf-core/demo/`, and its revision-specific code is in `clones/<commitId>/` inside that folder. See [Nextflow's revision selection documentation](https://docs.seqera.io/nextflow/cli#revision-selection).
 
 | Contents                           | Location in this workshop                        |
 | ---------------------------------- | ------------------------------------------------ |
-| Pipeline code                      | `$HOME/.nextflow/assets/nf-core/demo/`           |
+| Pipeline cache (new layout)         | `$HOME/.nextflow/assets/.repos/nf-core/demo/`    |
 | Container images for all pipelines | `$RCAC_SCRATCH/.apptainer/cache/`                |
 | Task files and final outputs       | `work/` and `results/` in your scratch workspace |
 
-If your environment sets `NXF_HOME` or `NXF_ASSETS`, the pipeline code location may differ.
+Older Nextflow versions or existing legacy caches may use `$HOME/.nextflow/assets/nf-core/demo/`. If your environment sets `NXF_HOME` or `NXF_ASSETS`, the cache location may differ. Check your Nextflow version and the pipeline's **local path** with:
+
+```bash
+nextflow -version
+nextflow info nf-core/demo
+```
 
 ### If GitHub reports `API rate limit exceeded`
 
