@@ -84,6 +84,43 @@ The export is optional with the [Gautschi institutional profile](https://nf-co.r
 
 If your environment sets `NXF_HOME` or `NXF_ASSETS`, the pipeline code location may differ.
 
+### If GitHub reports `API rate limit exceeded`
+
+On Gautschi, users can share an outbound IP address. If that address exhausts [GitHub's anonymous API limit](https://docs.github.com/en/rest/using-the-rest-api/rate-limits-for-the-rest-api), `nextflow run nf-core/demo` may fail while pulling the pipeline code with **`API rate limit exceeded`**. Configure a personal GitHub token so Nextflow uses your authenticated API allowance.
+
+Create a [fine-grained personal access token](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#creating-a-fine-grained-personal-access-token) with an expiration date. Read-only access to public repositories is sufficient for the public nf-core pipelines; write access is unnecessary.
+
+On the Gautschi login node, create or edit Nextflow's credentials file:
+
+```bash
+mkdir -p "$HOME/.nextflow"
+touch "$HOME/.nextflow/scm"
+chmod 600 "$HOME/.nextflow/scm"
+nano "$HOME/.nextflow/scm"
+```
+
+Add the following entry, replacing both placeholders. If the file already contains a `providers` block, add or update `github` inside it and preserve your other provider settings:
+
+```groovy
+providers {
+    github {
+        user     = 'YOUR_GITHUB_USERNAME'
+        password = 'YOUR_GITHUB_PERSONAL_ACCESS_TOKEN'
+    }
+}
+```
+
+**Put the token in the `password` field**, as specified in [Nextflow's GitHub credentials documentation](https://docs.seqera.io/nextflow/git#github). Keep this file private in your home directory and keep the actual token out of job scripts, Git repositories, and shared notes.
+
+Save the file, test the pipeline download, then resubmit your job:
+
+```bash
+module load nextflow
+nextflow pull nf-core/demo -r 1.2.0
+```
+
+Nextflow reads `~/.nextflow/scm` automatically, including when it runs in your Slurm job.
+
 ### Read a launch command
 
 ```bash
